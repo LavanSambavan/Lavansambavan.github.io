@@ -22,10 +22,12 @@ function setup() {
   currentColorIndex = 0
 
 }
+
+
 // Changes background colours
-function mousePressed(){
+function mousePressed() {
   // Act only when center button is clicked
-  if (mouseButton === CENTER){
+  if (mouseButton === CENTER) {
     // Ensure we reset the index to 
     // the begining of the array
     if (currentColorIndex == 3) {
@@ -41,10 +43,10 @@ function mousePressed(){
 // Function to draw the plannet at any given time
 function drawPlanet(distance, radius, plannetColor, speed) {
 
-  let angle = frameCount*speed;
+  let angle = frameCount * speed;
 
   // X position using cosin for orbit
-  let x = distance * cos(angle); 
+  let x = distance * cos(angle);
 
   //Y position using sin for orbit
   let y = distance * sin(angle);
@@ -52,16 +54,16 @@ function drawPlanet(distance, radius, plannetColor, speed) {
   fill(plannetColor);
 
   // Draw the plannet in ellipse
-  ellipse(x, y, radius * 2, radius * 2);
+  ellipse(x, y, radius*2);
 
-  
+
 }
 
-function mouseWheel(event) {
-  text(event, 0,0)
-  
-}
+function asteroid(){
+  fill(50,20,20);// draws a asteroid
+  circle(100,-400,40);
 
+}
 function draw() {
   //background(100, 180, 220);
   // Set the background to black
@@ -74,7 +76,10 @@ function draw() {
 
   //Sun Color
   fill(255, 204, 0);
-  ellipse(0, 0, 60, 60); // Sun in the center
+  ellipse(0, 0, 60); // Sun in the center
+
+  asteroid()
+  
 
   // Draw plannets in the elliptical orbits
   //Mercury
