@@ -13,6 +13,7 @@ function setup() {
 function draw() {
   myBackground();
   myForeground();
+  // this is where the screen actually draws 
 
 }
 
@@ -28,5 +29,13 @@ for(let x = 0; x < mouseX; x += 50){
   circle(x, height / 2, 40);
   fill(255);
   text(x, x, height/2);
+}
+
+
+//Create stars
+let starCount = 0;
+while(starCount < 100){
+  fill(255, 0, 0);
+  
 }
 }
