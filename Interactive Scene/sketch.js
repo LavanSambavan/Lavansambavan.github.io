@@ -7,6 +7,8 @@
 let bgColors;
 let currentColorIndex;
 
+let rocketX = 0; // Rocket's horizontal position
+let rocketY = 0; // Rocket's vertical position
 
 stroke()
 function setup() {
@@ -54,32 +56,22 @@ function drawPlanet(distance, radius, plannetColor, speed) {
   fill(plannetColor);
 
   // Draw the plannet in ellipse
-  ellipse(x, y, radius*2);
+  ellipse(x, y, radius * 2);
 
 
 }
 
-function asteroid(){
-  fill(50,20,20);// draws a asteroid
-  circle(100,-400,40);
+function asteroid() {
+  fill(50, 20, 20);// draws a asteroid
+  circle(mouseX, mouseY, 40);
 
 }
-function draw() {
-  //background(100, 180, 220);
-  // Set the background to black
-  background(bgColors[currentColorIndex]);
 
-  // Move the origin to the center
-  translate(width / 2, height / 2);
-
-  noStroke();
-
+function solarSystem() {
   //Sun Color
   fill(255, 204, 0);
   ellipse(0, 0, 60); // Sun in the center
 
-  asteroid()
-  
 
   // Draw plannets in the elliptical orbits
   //Mercury
@@ -93,7 +85,58 @@ function draw() {
 
   //Mars
   drawPlanet(150, 9, 'red', 0.01);
+}
 
+
+function rocketShip() {
+  fill('lightgray');
+  rect(-15, -40, 30, 80); // Rocket body
+
+  // Rocket tip (triangle)
+  fill('red');
+  triangle(-25, -40, 25, -40, 0, -70); // Rocket tip
+
+  // Draw the boosters (triangles)
+  fill('orange');
+  triangle(-15, 40, -35, 70, -5, 40); // Left booster
+  triangle(15, 40, 35, 70, 5, 40);     // Right booster
+
+  // Rocket windows (circles)
+  fill('blue');
+  ellipse(0, -20, 10, 10); // Window
+}
+
+// Moves the rocket based on arrow key input
+
+
+
+function draw() {
+  //background(100, 180, 220);
+  // Set the background to black
+  background(bgColors[currentColorIndex]);
+
+  keyPressed();
+
+  function keyPressed() {
+    if (keyCode === UP_ARROW) {
+      rocketY -= 5; // Move up
+    } else if (keyCode === DOWN_ARROW) {
+      rocketY += 5; // Move down
+    } else if (keyCode === LEFT_ARROW) {
+      rocketX -= 5; // Move left
+    } else if (keyCode === RIGHT_ARROW) {
+      rocketX += 5; // Move right
+    }
+  }
+
+  asteroid();
+
+  // Move the origin to the center
+  translate(width / 2, height / 2);
+
+  noStroke();
+  solarSystem();
+  rocketShip();
 
 }
 
