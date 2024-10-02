@@ -2,15 +2,17 @@
 // Lavan
 // September 16, 2024
 
-// Creates and interactive scene
+// Creates an interactive scene
+
+
 // Global variables
 let bgColors;
-let currentColorIndex;
+let currentBack;
 
 let rocketX = 0; // Rocket's horizontal position
 let rocketY = 0; // Rocket's vertical position
 
-stroke()
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
@@ -21,7 +23,7 @@ function setup() {
     color(0),   // black
     color(192, 192, 192) // gray
   ];
-  currentColorIndex = 0
+  currentBack = 0
 
 }
 
@@ -32,12 +34,12 @@ function mousePressed() {
   if (mouseButton === CENTER) {
     // Ensure we reset the index to 
     // the begining of the array
-    if (currentColorIndex == 3) {
-      currentColorIndex = 0;
+    if (currentBack == 3) {
+      currentBack = 0;
     }
     else {
       // Increment the index position by one
-      currentColorIndex = currentColorIndex + 1;
+      currentBack = currentBack + 1;
     }
   }
 }
@@ -90,22 +92,36 @@ function solarSystem() {
 
 function rocketShip() {
   fill('lightgray');
-  rect(-15, -40, 30, 80); // Rocket body
+  rect(-15 + rocketX, -40 + rocketY, 30, 80); // Rocket body
 
   // Rocket tip (triangle)
   fill('red');
-  triangle(-25, -40, 25, -40, 0, -70); // Rocket tip
+  triangle(-25 + rocketX, -40 + rocketY, 25 + rocketX, -40 + rocketY, 0 + rocketX, -70 + rocketY); // Rocket tip
 
   // Draw the boosters (triangles)
   fill('orange');
-  triangle(-15, 40, -35, 70, -5, 40); // Left booster
-  triangle(15, 40, 35, 70, 5, 40);     // Right booster
+  triangle(-15 + rocketX, 40 + rocketY, -35 + rocketX, 70 + rocketY, -5 + rocketX, 40 + rocketY); // Left booster
+  triangle(15 + rocketX, 40 + rocketY, 35 + rocketX, 70 + rocketY, 5 + rocketX, 40 + rocketY);     // Right booster
 
   // Rocket windows (circles)
   fill('blue');
-  ellipse(0, -20, 10, 10); // Window
+  ellipse(0 + rocketX, -20 + rocketY, 10, 10); // Window
 }
 
+function keyPressed() {
+  if (keyCode === UP_ARROW) {
+    rocketY -= 10; // Move up
+  }
+  else if (keyCode === DOWN_ARROW) {
+    rocketY += 10; // Move down
+  }
+  else if (keyCode === LEFT_ARROW) {
+    rocketX -= 10; // Move left
+  }
+  else if (keyCode === RIGHT_ARROW) {
+    rocketX += 10; // Move right
+  }
+}
 // Moves the rocket based on arrow key input
 
 
@@ -113,23 +129,13 @@ function rocketShip() {
 function draw() {
   //background(100, 180, 220);
   // Set the background to black
-  background(bgColors[currentColorIndex]);
-
-  keyPressed();
-
-  function keyPressed() {
-    if (keyCode === UP_ARROW) {
-      rocketY -= 5; // Move up
-    } else if (keyCode === DOWN_ARROW) {
-      rocketY += 5; // Move down
-    } else if (keyCode === LEFT_ARROW) {
-      rocketX -= 5; // Move left
-    } else if (keyCode === RIGHT_ARROW) {
-      rocketX += 5; // Move right
-    }
-  }
-
+  background(bgColors[currentBack]);
   asteroid();
+
+  fill('red')
+  textSize(24);
+  text("LavanS", 20, height - 20);
+
 
   // Move the origin to the center
   translate(width / 2, height / 2);
@@ -137,6 +143,7 @@ function draw() {
   noStroke();
   solarSystem();
   rocketShip();
-
+  fill(0);
+ 
 }
 
