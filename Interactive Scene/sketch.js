@@ -27,6 +27,25 @@ function setup() {
 
 }
 
+function draw() {
+  //background(100, 180, 220);
+  // Set the background to black
+  background(bgColors[currentBack]);
+  asteroid();
+
+  // writes my name
+  name();
+  
+  // Move the origin to the center
+  translate(width / 2, height / 2);
+
+  noStroke();
+  solarSystem();
+  rocketShip();
+  fill(0);
+
+}
+
 
 // Changes background colours
 function mousePressed() {
@@ -108,6 +127,7 @@ function rocketShip() {
   ellipse(0 + rocketX, -20 + rocketY, 10, 10); // Window
 }
 
+// Moves the rocket based on arrow key input
 function keyPressed() {
   if (keyCode === UP_ARROW) {
     rocketY -= 10; // Move up
@@ -122,28 +142,16 @@ function keyPressed() {
     rocketX += 10; // Move right
   }
 }
-// Moves the rocket based on arrow key input
 
+function name(){
 
-
-function draw() {
-  //background(100, 180, 220);
-  // Set the background to black
-  background(bgColors[currentBack]);
-  asteroid();
-
-  fill('red')
-  textSize(24);
-  text("LavanS", 20, height - 20);
-
-
-  // Move the origin to the center
-  translate(width / 2, height / 2);
-
-  noStroke();
-  solarSystem();
-  rocketShip();
-  fill(0);
- 
+    //writes my name in the bottom right corner
+    fill('red')
+    textSize(24);
+    text("LavanS", 20, height - 20);
+  
 }
+
+
+
 
