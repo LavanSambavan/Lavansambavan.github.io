@@ -35,7 +35,7 @@ function draw() {
 
   // writes my name
   name();
-  
+
   // Move the origin to the center
   translate(width / 2, height / 2);
 
@@ -151,7 +151,3 @@ function name(){
     text("LavanS", 20, height - 20);
   
 }
-
-
-
-
