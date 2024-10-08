@@ -2,7 +2,7 @@
 // Lavan 
 // October 1, 2024
 
-l
+let rectWidth = 8;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -14,13 +14,18 @@ function draw() {
 }
 
 function staircase(){
-  //use for loops to draw a series of rectangles for use of terrain
-  randomSeed(1); // only ofr random()
-  let rectWidth = 4;
-  for(let x = 0; x<= width; x  += rectWidth){
-    noFill()
-    //generate a random height for each rectangle
-    let rectHeight = random(50, 500)
-    rect(x, height, rectWidth, -rectHeight)
+
+  // let rectWidth = 4;
+  
+  for (let x = 0; x <= width; x += rectWidth) {
+    noFill();
+    
+    // Generate a height for each rectangle using noise
+    let noiseValue = noise(x * 0.01); // Scale the x value for more variety
+    let rectHeight = noiseValue * 1000; // Scale the height to fit the canvas
+    
+    // Draw the rectangle
+    rect(x, height, rectWidth, -rectHeight);
   }
 }
+
