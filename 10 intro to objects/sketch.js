@@ -6,6 +6,7 @@
 function setup() {
   createCanvas(windowWidth, windowHeight);
   myBook = new Book("CS 30 Textbook", "Lavan Sambavan", "leatherbound", 515, 1234567891011, width * 0.3);
+  
 }
 
 function draw() {
@@ -42,7 +43,7 @@ class Book {
       case "leatherbound":
         fill(150, 100, 15); break;
     }
-    rect(this.x, height / 2, this.pages / 10, 140);
+    rect(this.x, height/2, this.pages / 10, 140);
     textSize(20); fill(255);
     text(this.title[0], this.x, height / 2 - 50);
   }
