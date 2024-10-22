@@ -5,143 +5,77 @@
 // Extra for Experts:
 // - describe what you did to take this project "above and beyond"
 
-
 let eastbound = [];
 let westbound = [];
-let trafficLight;
 
 function setup() {
-  createCanvas(800, 400);
-
-  // Initialize traffic light
-  trafficLight = new TrafficLight();
-
-  // Populate eastbound and westbound arrays
+  createCanvas(windowWidth, windowHeight);
   for (let i = 0; i < 20; i++) {
-    eastbound.push(new Vehicle(random(50, 750), random(50, 350), 1)); // Moving right
-    westbound.push(new Vehicle(random(750, 50), random(50, 350), 0)); // Moving left
+    eastbound.push(new Vehicle(random(windowWidth), random(100, 350), 1));
+    westbound.push(new Vehicle(random(windowWidth), random(400, 650), 0));
   }
 }
 
 function draw() {
   background(220);
   drawRoad();
-
-  // Update and display vehicles
-  for (let vehicle of eastbound) {
-    vehicle.action();
+  for (let i = 0; i < eastbound.length; i++) {
+    eastbound[i].action();
   }
-  for (let vehicle of westbound) {
-    vehicle.action();
+  for (let i = 0; i < westbound.length; i++) {
+    westbound[i].action();
   }
-
-  // Update and display traffic light
-  trafficLight.display();
 }
+
+// function mouseClicked(){
+//   eastbound.push(new Vehicle(random(windowWidth, windowHeight/2), 1));
+// }
 
 function drawRoad() {
-  fill(0); // Black road
-  rect(0, 0, width, height);
-
-  stroke(255); // White lane line
+  fill(0);
+  noStroke();
+  rect(0, height / 2 - 300, width, 600);
+  stroke(255);
   strokeWeight(5);
-  for (let i = 0; i < height; i += 40) {
-    line(width / 2, i, width / 2, i + 20); // Dashed line
+  for (let i = 0; i < width; i += 40) {
+    line(i, height / 2, i + 20, height / 2);
   }
 }
 
-// Vehicle Class
 class Vehicle {
-  constructor(x, y, direction) {
-    this.type = floor(random(0, 2)); // 0 or 1
-    this.color = color(random(255), random(255), random(255));
+  constructor(x, y, dir) {
     this.x = x;
     this.y = y;
-    this.direction = direction; // 0 for left, 1 for right
-    this.xSpeed = direction === 1 ? random(2, 5) : random(-5, -2);
+    this.dir = dir;
+    this.c = color(random(255), random(255), random(255));
+    this.type = int(random(2));
+    this.xspeed = xspeed;
   }
 
-  display() {
-    fill(this.color);
-    if (this.type === 0) {
-      rect(this.x, this.y, 30, 15); // Car
-    } else {
-      rect(this.x, this.y, 40, 20); // Truck/Van
-    }
-  }
-
-  move() {
-    this.x += this.xSpeed;
-    if (this.x > width) this.x = 0; // Wrap around
-    if (this.x < 0) this.x = width; // Wrap around
-  }
-
-  speedUp() {
-    if (this.xSpeed < 15 && this.xSpeed > 0) {
-      this.xSpeed += 0.1;
-    }
-  }
-
-  speedDown() {
-    if (this.xSpeed > 0) {
-      this.xSpeed -= 0.1;
-    }
-  }
-
-  changeColor() {
-    this.color = color(random(255), random(255), random(255));
-  }
 
   action() {
-    this.move();
-    if (random(1) < 0.01) this.speedUp();
-    if (random(1) < 0.01) this.speedDown();
-    if (random(1) < 0.01) this.changeColor();
+    // call the other functions like move, speed up etc..
     this.display();
-  }
-}
-
-// TrafficLight Class
-class TrafficLight {
-  constructor() {
-    this.state = 'green'; // Initial state
-    this.timer = 0; // Timer for red light duration
   }
 
   display() {
-    fill(this.state === 'red' ? 'red' : 'green');
-    rect(700, 50, 30, 60);
-  }
-
-  changeState() {
-    if (this.state === 'green') {
-      this.state = 'red';
-      this.timer = 120; // 120 frames of red light
+    if (this.type === 0) {
+      this.drawCar();
+    }
+    else if (this.type === 1) {
+      this.drawTruck();
     }
   }
 
-  update() {
-    if (this.state === 'red') {
-      this.timer--;
-      if (this.timer <= 0) {
-        this.state = 'green';
-      }
-    }
+  drawCar() {
+    fill(this.c);
+    noStroke();
+    rect(this.x, this.y, 30, 15);
   }
-}
 
-function keyPressed() {
-  if (key === ' ') {
-    trafficLight.changeState();
-  }
-}
-
-function mousePressed() {
-  if (mouseButton === LEFT) {
-    if (!keyIsDown(SHIFT)) {
-      eastbound.push(new Vehicle(0, mouseY, 1));
-    } else {
-      westbound.push(new Vehicle(width, mouseY, 0));
-    }
+  drawTruck() {
+    fill(this.c);
+    noStroke();
+    rect(this.x, this.y, 40, 20);
   }
 }
