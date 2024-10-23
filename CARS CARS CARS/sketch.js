@@ -11,8 +11,8 @@ let westbound = [];
 function setup() {
   createCanvas(windowWidth, windowHeight);
   for (let i = 0; i < 20; i++) {
-    eastbound.push(new Vehicle(random(windowWidth), random(100, 350), 1));
-    westbound.push(new Vehicle(random(windowWidth), random(400, 650), 0));
+    eastbound.push(new Vehicle(random(windowWidth), random(600, 800), 1, 5));
+    westbound.push(new Vehicle(random(windowWidth), random(300, 550), -1, 5));
   }
 }
 
@@ -27,9 +27,9 @@ function draw() {
   }
 }
 
-// function mouseClicked(){
-//   eastbound.push(new Vehicle(random(windowWidth, windowHeight/2), 1));
-// }
+function mouseClicked(){
+  eastbound.push(new Vehicle(random(windowWidth), random(600,800), 1, 5));
+}
 
 function drawRoad() {
   fill(0);
@@ -43,19 +43,26 @@ function drawRoad() {
 }
 
 class Vehicle {
-  constructor(x, y, dir) {
+  constructor(x, y, dir, xSpeed) {
     this.x = x;
     this.y = y;
     this.dir = dir;
     this.c = color(random(255), random(255), random(255));
     this.type = int(random(2));
-    this.xspeed = xspeed;
+    this.xSpeed = xSpeed;
   }
 
 
   action() {
     // call the other functions like move, speed up etc..
     this.display();
+    this.move();
+    if (int(random(100)) === 1){
+      this.speedDown();
+    }
+    if(int(random(100)) === 1){
+      this.speedUp();
+    }
   }
 
   display() {
@@ -77,5 +84,27 @@ class Vehicle {
     fill(this.c);
     noStroke();
     rect(this.x, this.y, 40, 20);
+  }
+
+  move() {
+    this.x += this.xSpeed * this.dir;
+    if (this.x > width) {
+      this.x = 0; // Wrap around 
+    }
+    if (this.x < 0) {
+      this.x = width; // Wrap around
+    }
+  }
+
+  speedUp() {
+    if (this.xSpeed < 15 && this.xSpeed > 0) {
+      this.xSpeed += 0.1;
+    }
+  }
+
+  speedDown() {
+    if (this.xSpeed > 0) {
+      this.xSpeed -= 0.1;
+    }
   }
 }
