@@ -2,7 +2,7 @@
 // Lavan 
 // October 1, 2024
 
-let rectWidth = ;
+let rectWidth = 200;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);

@@ -8,11 +8,12 @@
 let eastbound = [];
 let westbound = [];
 
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
   for (let i = 0; i < 20; i++) {
-    eastbound.push(new Vehicle(random(windowWidth), random(600, 800), 1, 5));
-    westbound.push(new Vehicle(random(windowWidth), random(300, 550), -1, 5));
+    eastbound.push(new Vehicle(random(windowWidth), random(500, 750), 1, 5));
+    westbound.push(new Vehicle(random(windowWidth), random(200, 450), -1, 5));
   }
 }
 
@@ -27,8 +28,8 @@ function draw() {
   }
 }
 
-function mouseClicked(){
-  eastbound.push(new Vehicle(random(windowWidth), random(600,800), 1, 5));
+function mouseClicked() {
+  eastbound.push(new Vehicle(random(windowWidth), random(600, 800), 1, 5));
 }
 
 function drawRoad() {
@@ -57,23 +58,26 @@ class Vehicle {
     // call the other functions like move, speed up etc..
     this.display();
     this.move();
-    if (int(random(100)) === 1){
+    if (int(random(100)) === 1) {
       this.speedDown();
     }
-    if(int(random(100)) === 1){
+    if (int(random(100)) === 1) {
       this.speedUp();
     }
-  }
-
-  display() {
-    if (this.type === 0) {
-      this.drawCar();
-    }
-    else if (this.type === 1) {
-      this.drawTruck();
+    if (random(1) < 0.01) {
+      this.changeColor();
     }
   }
 
+    display() {
+      if (this.type === 0) {
+        this.drawCar();
+      }
+      else if (this.type === 1) {
+        this.drawTruck();
+      }
+    }
+  
   drawCar() {
     fill(this.c);
     noStroke();
@@ -106,5 +110,19 @@ class Vehicle {
     if (this.xSpeed > 0) {
       this.xSpeed -= 0.1;
     }
+  }
+  changeColor() {
+    this.c = color(random(255), random(255), random(255));
+  }
+
+}
+
+function mouseClicked() {
+  if (keyIsDown(SHIFT)) {
+    // Shift + left click for westbound car
+    westbound.push(new Vehicle(random(windowWidth), random(200, 450), -1, 5));
+  } else {
+    // Left click for eastbound car
+    eastbound.push(new Vehicle(random(windowWidth), random(600, 800), 1, 5));
   }
 }
