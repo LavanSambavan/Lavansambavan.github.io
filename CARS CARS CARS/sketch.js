@@ -13,7 +13,7 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
   for (let i = 0; i < 20; i++) {
     eastbound.push(new Vehicle(random(width), height / 2 + 20 + random(250), 1, 5));
-    westbound.push(new Vehicle(random(width), height / 2 - 40 + random(-250), -1, 5));
+    westbound.push(new Vehicle(random(width), height / 2 - 50 + random(-250), -1, 5));
   }
   Light = new trafficLight();
 }
@@ -160,7 +160,7 @@ class trafficLight {
       fill("red");
     }
     noStroke();
-    rect(width / 2 - 25, height / 2 - 500, 100, 50);
+    rect(width / 2 - 25, height / 2 - 450, 100, 50);
   }
   toggle() {
     if (this.state === "green") {
