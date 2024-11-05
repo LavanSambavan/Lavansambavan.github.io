@@ -1,4 +1,4 @@
-// Project Title
+// CARS CARS CARS
 // Your Name
 // Date
 //
@@ -12,21 +12,19 @@ let Light;
 function setup() {
   createCanvas(windowWidth, windowHeight);
   for (let i = 0; i < 20; i++) {
-    eastbound.push(new Vehicle(random(width), height / 2 + 20 + random(250), 1, 5));
-    westbound.push(new Vehicle(random(width), height / 2 - 50 + random(-250), -1, 5));
+    eastbound.push(new Vehicle(random(width), height / 2 + 20 + random(240), 1, 5));
+    westbound.push(new Vehicle(random(width), height / 2 - 50 + random(-225), -1, 5));
   }
   Light = new trafficLight();
 }
 
 function mouseClicked() {
   if (keyIsDown(SHIFT)) {
-    // Left click for eastbound car
-    eastbound.push(new Vehicle(random(windowWidth), height / 2 + 20 + random(250), 1, 5));
+    westbound.push(new Vehicle(random(windowWidth), height / 2 - 30 + random(-250), -1, 5));
 
   }
   else {
-    // Shift + left click for westbound car
-    westbound.push(new Vehicle(random(windowWidth), height / 2 - 30 + random(-250), -1, 5));
+    eastbound.push(new Vehicle(random(windowWidth), height / 2 + 20 + random(250), 1, 5));
   }
 }
 
@@ -95,19 +93,24 @@ class Vehicle {
   drawCar() {
     fill(this.c);
     noStroke();
-    rect(this.x, this.y, 40, 20); // car body
-    fill(60);
-    ellipse(this.x + 15, this.y + 20, 10, 10); // left wheel
-    ellipse(this.x + 25, this.y + 15, 10, 10); // right wheel
-  }
+    // Car body
+    rect(this.x, this.y, 40, 20);
+    // Wheels
+    fill(60);  // Tire color
+  ellipse(this.x + 10, this.y + 20, 12, 12); // Left wheel
+  ellipse(this.x + 30, this.y + 20, 12, 12); // Right wheel 
+}
 
   drawTruck() {
     fill(this.c);
     noStroke();
+    // Truck body
     rect(this.x, this.y, 60, 30);
+    rect(this.x + 20, this.y - 15, 20, 15);
+    // Wheels
     fill(60);
-    ellipse(this.x + 10, this.y + 30, 15, 15);
-    ellipse(this.x + 50, this.y + 30, 15, 15);
+    ellipse(this.x + 15, this.y + 30, 12, 12); // Left wheel
+    ellipse(this.x + 45, this.y + 30, 12, 12); // Right wheel
   }
 
   move() {
@@ -127,7 +130,7 @@ class Vehicle {
   }
 
   speedDown() {
-    if (this.xSpeed > 0) {
+    if (this.xSpeed > 0.11) {
       this.xSpeed -= 0.1;
     }
   }
