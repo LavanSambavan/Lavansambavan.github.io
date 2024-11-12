@@ -1,47 +1,46 @@
 // CARS CARS CARS
-// Your Name
-// Date
+// Lavan
+// November 12 2024
 //
-// Extra for Experts:
-// - describe what you did to take this project "above and beyond"
 
-let eastbound = [];
+//Global variables
+let eastbound = []; 
 let westbound = [];
 let Light;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  for (let i = 0; i < 20; i++) {
-    eastbound.push(new Vehicle(random(width), height / 2 + 20 + random(240), 1, 5));
-    westbound.push(new Vehicle(random(width), height / 2 - 50 + random(-225), -1, 5));
+  for (let i = 0; i < 20; i++) { //makes sure only 20 cars will spawn going east or west 
+    eastbound.push(new Vehicle(random(width), height / 2 + 20 + random(240), 1, 5)); //spawns cars going east giving a random variable on a specific area (bottom part of the road so they stay in their lane)
+    westbound.push(new Vehicle(random(width), height / 2 - 50 + random(-225), -1, 5)); // same thing as eastbound but cars are going west
   }
-  Light = new trafficLight();
+  Light = new trafficLight(); //creates my traffic light which will allow me to stop the cars
 }
 
-function mouseClicked() {
+function mouseClicked() { //assigns keys to allow me to add more cars going in a specific direction
   if (keyIsDown(SHIFT)) {
-    westbound.push(new Vehicle(random(windowWidth), height / 2 - 30 + random(-250), -1, 5));
+    westbound.push(new Vehicle(random(windowWidth), height / 2 - 30 + random(-250), -1, 5)); // if im pressing the shift key while left clicking it generates cars going west
 
   }
   else {
-    eastbound.push(new Vehicle(random(windowWidth), height / 2 + 20 + random(250), 1, 5));
+    eastbound.push(new Vehicle(random(windowWidth), height / 2 + 20 + random(250), 1, 5)); // if im just left clicking it generates a car going east
   }
 }
 
 function draw() {
   background(220);
-  drawRoad();
+  drawRoad(); // draws my road
   Light.update();
-  Light.display();
+  Light.display();// generates the traffic light
   for (let i = 0; i < eastbound.length; i++) {
-    eastbound[i].action();
+    eastbound[i].action(); // draws the cars
   }
   for (let i = 0; i < westbound.length; i++) {
-    westbound[i].action();
+    westbound[i].action(); //draws the cars
   }
 }
 
-function drawRoad() {
+function drawRoad() { // a function that draws my whole road
   fill(0);
   noStroke();
   rect(0, height / 2 - 300, width, 600);
@@ -53,35 +52,35 @@ function drawRoad() {
 }
 
 
-class Vehicle {
+class Vehicle {// a class that gives characteristics for the vehicles
   constructor(x, y, dir, xSpeed) {
-    this.x = x;
-    this.y = y;
-    this.dir = dir;
-    this.c = color(random(255), random(255), random(255));
-    this.type = int(random(2));
-    this.xSpeed = xSpeed;
+    this.x = x; // gives x position
+    this.y = y; // gives y position
+    this.dir = dir; // direction  of car
+    this.c = color(random(255), random(255), random(255)); // gives an original random colour
+    this.type = int(random(2)); //decides if its a truck or a car
+    this.xSpeed = xSpeed; // speed
   }
 
 
   action() {
-    // call the other functions like move, speed up etc..
+    // calls all the other functions like move, speed up etc..
     this.display();
     if (Light.state === "green") {
-      this.move();
+      this.move(); // says that if the ligt is green my cars will keep moving
     }
     if (int(random(100)) === 1) {
-      this.speedDown();
+      this.speedDown(); //1% chance cars will slow down
     }
     if (int(random(100)) === 1) {
-      this.speedUp();
+      this.speedUp(); //1% chance cars will speed up
     }
     if (random(1) < 0.01) {
-      this.changeColor();
+      this.changeColor(); //1% chance cars will change colours
     }
   }
 
-  display() {
+  display() { // displays the type of vehicle
     if (this.type === 0) {
       this.drawCar();
     }
@@ -90,7 +89,7 @@ class Vehicle {
     }
   }
 
-  drawCar() {
+  drawCar() { // function that draws a car
     fill(this.c);
     noStroke();
     // Car body
@@ -101,7 +100,7 @@ class Vehicle {
   ellipse(this.x + 30, this.y + 20, 12, 12); // Right wheel 
 }
 
-  drawTruck() {
+  drawTruck() { // function that draws a truck
     fill(this.c);
     noStroke();
     // Truck body
@@ -113,7 +112,7 @@ class Vehicle {
     ellipse(this.x + 45, this.y + 30, 12, 12); // Right wheel
   }
 
-  move() {
+  move() { // moves the car assigning a speed
     this.x += this.xSpeed * this.dir;
     if (this.x > width) {
       this.x = 0; // Wrap around 
@@ -123,24 +122,24 @@ class Vehicle {
     }
   }
 
-  speedUp() {
+  speedUp() { // function that speeds up the car
     if (this.xSpeed < 15 && this.xSpeed > 0) {
       this.xSpeed += 0.1;
     }
   }
 
-  speedDown() {
+  speedDown() { // function that slows down the car
     if (this.xSpeed > 0.11) {
       this.xSpeed -= 0.1;
     }
   }
-  changeColor() {
+  changeColor() { // function that changes the colour of the car
     this.c = color(random(255), random(255), random(255));
   }
 
 }
 
-class trafficLight {
+class trafficLight { // assigns characteristics for my traffic light
   constructor() {
     this.state = "green";
     this.time = 0;
@@ -155,7 +154,7 @@ class trafficLight {
     }
   }
 
-  display() {
+  display() { //draws and shows my traffic light
     if (this.state === "green") {
       fill("green");
     }
@@ -168,12 +167,12 @@ class trafficLight {
   toggle() {
     if (this.state === "green") {
       this.state = "red";
-      this.time = 120;
+      this.time = 120; // stops the cars for 120 frames when its red
     }
   }
 }
 
-function keyPressed() {
+function keyPressed() { // if space button is pressed my light switches from green to red and stops the cars
   if (key === ' ') {
     Light.toggle();
   }
