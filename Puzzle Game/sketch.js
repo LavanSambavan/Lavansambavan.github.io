@@ -15,6 +15,9 @@ let gridData = [[0, 0, 0, 0, 0],
 [0, 255, 0, 0, 0],
 [255, 255, 255, 0, 0]];
 
+let crossPattern = true;
+let winMessageShown = false;
+
 
 
 function setup() {
@@ -37,8 +40,8 @@ function draw() {
   background(220);
   determineActiveSquare();   //figure out which tile the mouse cursor is over
   drawGrid();               //render the current game board to the screen (and the overlay)
-  if (checkWin === true){
-    display.winMessage();
+  if (checkWin() && !winMessageShown) {
+    displaywinMessage();
   }
   //overlay(mouseX, mouseY);
 }
@@ -50,14 +53,22 @@ function mousePressed() { // the cheater cheater code
   if (keyIsDown(SHIFT)) {
     flip(currentCol, currentRow);
   }
-  else {
+  else if (crossPattern === "true") {
     flip(currentCol, currentRow);
     flip(currentCol - 1, currentRow);
     flip(currentCol + 1, currentRow);
     flip(currentCol, currentRow - 1);
     flip(currentCol, currentRow + 1);
   }
+  else if (crossPattern === "false") {
+    flip(currentCol, currentRow);
+    flip(currentCol + 1, currentRow);
+    flip(currentCol, currentRow + 1);
+    flip(currentCol + 1, currentRow + 1);
+  }
 }
+
+
 function flip(col, row) {
   // given a column and row for the 2D array, flip its value from 0 to 255 or 255 to 0
   // conditions ensure that the col and row given are valid and exist for the array. If not, no operations take place.
@@ -69,25 +80,33 @@ function flip(col, row) {
   }
 }
 
-function checkWin(){
+function keyPressed() {
+  if (key === ' ') {
+    crossPattern = !crossPattern;
+  }
+}
+
+
+
+function checkWin() {
   let firstValue = gridData[0][0];
-  for (let row = 0; row<NUM_ROWS; row++){
-    for(let col = 0; col<NUM_COLS; col++){
-      if (gridData[row][col] !== firstValue){
+  for (let row = 0; row < NUM_ROWS; row++) {
+    for (let col = 0; col < NUM_COLS; col++) {
+      if (gridData[row][col] !== firstValue) {
         return false;
       }
     }
   }
   return true;
-  }
+}
 
-  function winMessage(){
-    textSize(30);
-    fill(255, 0, 0);
-    textAlign(CENTER,CENTER);
-    text("You Win!", width/2, height/2);
-    winMessage = true;
-  }
+function winMessage() {
+  textSize(30);
+  fill(255, 0, 0);
+  textAlign(CENTER, CENTER);
+  text("You Win!", width / 2, height / 2);
+  winMessage = true;
+}
 
 
 function determineActiveSquare() {
