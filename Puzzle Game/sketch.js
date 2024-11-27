@@ -41,9 +41,9 @@ function draw() {
   determineActiveSquare();   //figure out which tile the mouse cursor is over
   drawGrid();               //render the current game board to the screen (and the overlay)
   if (checkWin() && !winMessageShown) {
-    displaywinMessage();
+    winMessage();
   }
-  //overlay(mouseX, mouseY);
+  overlay(mouseX, mouseY);
 }
 
 
@@ -53,14 +53,14 @@ function mousePressed() { // the cheater cheater code
   if (keyIsDown(SHIFT)) {
     flip(currentCol, currentRow);
   }
-  else if (crossPattern === "true") {
+  else if (crossPattern) {
     flip(currentCol, currentRow);
     flip(currentCol - 1, currentRow);
     flip(currentCol + 1, currentRow);
     flip(currentCol, currentRow - 1);
     flip(currentCol, currentRow + 1);
   }
-  else if (crossPattern === "false") {
+  else {
     flip(currentCol, currentRow);
     flip(currentCol + 1, currentRow);
     flip(currentCol, currentRow + 1);
@@ -105,7 +105,7 @@ function winMessage() {
   fill(255, 0, 0);
   textAlign(CENTER, CENTER);
   text("You Win!", width / 2, height / 2);
-  winMessage = true;
+  winMessageShown = true;
 }
 
 
@@ -117,6 +117,7 @@ function determineActiveSquare() {
 
 function drawGrid() {
   // Render a grid of squares - fill color set according to data stored in the 2D array
+  stroke(1)
   for (let x = 0; x < NUM_COLS; x++) {
     for (let y = 0; y < NUM_ROWS; y++) {
       fill(gridData[y][x]);
@@ -124,3 +125,47 @@ function drawGrid() {
     }
   }
 }
+
+function overlay(x, y) {
+  fill(255, 0, 0, 50);
+  noStroke();
+
+  if (crossPattern) {
+    rect(x, y, rectWidth, rectHeight); //center
+
+    // Left
+    if (x > rectWidth) {
+      rect(x - rectWidth, y, rectWidth, rectHeight);
+    }
+    // Right
+    if (x < (NUM_COLS - 1) * rectWidth) {
+      rect(x + rectWidth, y, rectWidth, rectHeight);
+    }
+    //top
+    if (y > rectHeight) {
+      rect(x, y - rectHeight, rectWidth, rectHeight);
+    }
+    //Bottom
+    if (y < (NUM_ROWS - 1) * rectHeight) {
+      rect(x, y + rectHeight, rectWidth, rectHeight);
+    }
+  }
+  else {
+    rect(x, y, rectWidth, rectHeight);//center
+    //right
+    if (x < (NUM_COLS - 1) * rectWidth) {
+      rect(x + rectWidth, y, rectWidth, rectHeight);
+    }
+    //bottom
+    if (y < (NUM_ROWS - 1) *   rectHeight) {
+      rect(x, y + rectHeight, rectWidth, rectHeight);
+    }
+    //bottom right
+    if (x < (NUM_COLS - 1) * rectWidth && y < (NUM_ROWS - 1) * rectHeight) {
+      rect(x + rectWidth, y + rectHeight, rectWidth, rectHeight);
+    }
+
+  }
+}
+
+
