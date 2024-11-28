@@ -9,13 +9,13 @@ let NUM_ROWS = 4; //number of rows on the grid
 let NUM_COLS = 5; // number of colums on the grid
 let rectWidth, rectHeight;
 let currentRow, currentCol; // current column and row
-let gridData = [[0, 0, 0, 0, 0], 
+let gridData = [[0, 0, 0, 0, 0],
 [0, 0, 0, 0, 0],
 [0, 255, 0, 0, 0],
 [255, 255, 255, 0, 0]];
 //sets it to the cross pattern to start and allows me to change from cross to square
-let crossPattern = true; 
- 
+let crossPattern = true;
+
 
 function setup() {
   // Determine the size of each square. Could use windowHeight,windowHeight  for Canvas to keep a square aspect ratio
@@ -25,22 +25,22 @@ function setup() {
   randomize();
 }
 // function to let me randomize my grid flipping different squares each time the game starts
-function randomize() { 
+function randomize() {
   // goes through each square on the grid
-  for (let row = 0; row < NUM_ROWS; row++) { 
+  for (let row = 0; row < NUM_ROWS; row++) {
     for (let col = 0; col < NUM_COLS; col++) {
       //randomly assigns a value of 0 or 255
-      gridData[row][col] = random(1) > 0.5 ? 255 : 0; 
+      gridData[row][col] = random(1) > 0.5 ? 255 : 0;
     }
   }
 }
 
 function draw() {
   background(220);
-   //figure out which tile the mouse cursor is over
-  determineActiveSquare();  
-   //render the current game board to the screen displays the win message when you win and calls the overlay function
-  drawGrid();              
+  //figure out which tile the mouse cursor is over
+  determineActiveSquare();
+  //render the current game board to the screen displays the win message when you win and calls the overlay function
+  drawGrid();
   if (checkWin()) {
     winMessage();
   }
@@ -49,7 +49,7 @@ function draw() {
 
 
 // the cheater cheater code
-function mousePressed() { 
+function mousePressed() {
   //flips the current cell only
   if (keyIsDown(SHIFT)) {
     flip(currentCol, currentRow);
@@ -91,7 +91,6 @@ function keyPressed() {
 }
 
 
-// runs through each cell checking if all cells are the same colour by comparing it to the top left cell of the grid
 function checkWin() {
   //stores the value of the top left cell
   let firstValue = gridData[0][0];
@@ -114,7 +113,7 @@ function winMessage() {
   fill(255, 0, 0);
   textAlign(CENTER, CENTER);
   text("You Win!", width / 2, height / 2);
-  
+
 }
 
 
@@ -134,6 +133,7 @@ function drawGrid() {
     }
   }
 }
+
 
 //highlights the cells that the current pattern is meant to flip
 function overlay(x, y) {
