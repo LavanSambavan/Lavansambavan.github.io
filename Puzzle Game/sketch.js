@@ -1,24 +1,21 @@
 // Puzzle Game
-// Your Name
-// Date
-//
-// Extra for Experts:
-// - describe what you did to take this project "above and beyond"
+// Lavan
+// November 28 2024
 
 
-let NUM_ROWS = 4;
-let NUM_COLS = 5;
+//Global variables
+
+let NUM_ROWS = 4; //number of rows on the grid
+let NUM_COLS = 5; // number of colums on the grid
 let rectWidth, rectHeight;
-let currentRow, currentCol;
-let gridData = [[0, 0, 0, 0, 0],
+let currentRow, currentCol; // current column and row
+let gridData = [[0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0],
 [0, 255, 0, 0, 0],
 [255, 255, 255, 0, 0]];
-
-let crossPattern = true;
-let winMessageShown = false;
-
-
+//sets it to the cross pattern to start and allows me to change from cross to square
+let crossPattern = true; 
+ 
 
 function setup() {
   // Determine the size of each square. Could use windowHeight,windowHeight  for Canvas to keep a square aspect ratio
@@ -27,32 +24,37 @@ function setup() {
   rectHeight = height / NUM_ROWS;
   randomize();
 }
-
-function randomize() {
-  for (let row = 0; row < NUM_ROWS; row++) {
+// function to let me randomize my grid flipping different squares each time the game starts
+function randomize() { 
+  // goes through each square on the grid
+  for (let row = 0; row < NUM_ROWS; row++) { 
     for (let col = 0; col < NUM_COLS; col++) {
-      gridData[row][col] = random(1) > 0.5 ? 255 : 0;
+      //randomly assigns a value of 0 or 255
+      gridData[row][col] = random(1) > 0.5 ? 255 : 0; 
     }
   }
 }
 
 function draw() {
   background(220);
-  determineActiveSquare();   //figure out which tile the mouse cursor is over
-  drawGrid();               //render the current game board to the screen (and the overlay)
-  if (checkWin() && !winMessageShown) {
+   //figure out which tile the mouse cursor is over
+  determineActiveSquare();  
+   //render the current game board to the screen displays the win message when you win and calls the overlay function
+  drawGrid();              
+  if (checkWin()) {
     winMessage();
   }
   overlay(mouseX, mouseY);
 }
 
 
-
-function mousePressed() { // the cheater cheater code
-  // cross-shaped pattern flips on a mouseclick. Boundary conditions are checked within the flip function to ensure in-bounds access for array
+// the cheater cheater code
+function mousePressed() { 
+  //flips the current cell only
   if (keyIsDown(SHIFT)) {
     flip(currentCol, currentRow);
   }
+  //when crosspattern is true it flips cells in a cross pattern
   else if (crossPattern) {
     flip(currentCol, currentRow);
     flip(currentCol - 1, currentRow);
@@ -60,6 +62,7 @@ function mousePressed() { // the cheater cheater code
     flip(currentCol, currentRow - 1);
     flip(currentCol, currentRow + 1);
   }
+  //when crosspattern is false it flips cells in a square pattern
   else {
     flip(currentCol, currentRow);
     flip(currentCol + 1, currentRow);
@@ -81,31 +84,37 @@ function flip(col, row) {
 }
 
 function keyPressed() {
+  //allows me to switch from crosspattern to a square pattern when spacebar is clicked by setting the variable crosspattern to false
   if (key === ' ') {
     crossPattern = !crossPattern;
   }
 }
 
 
-
+// runs through each cell checking if all cells are the same colour by comparing it to the top left cell of the grid
 function checkWin() {
+  //stores the value of the top left cell
   let firstValue = gridData[0][0];
+  //checks if the current cell is the same colour as your variable firstValue
   for (let row = 0; row < NUM_ROWS; row++) {
     for (let col = 0; col < NUM_COLS; col++) {
+      //if any cell doesnt match firstValue it returns false
       if (gridData[row][col] !== firstValue) {
         return false;
       }
     }
   }
+  //returns true when all cells are the same colour
   return true;
 }
 
 function winMessage() {
+  //displays the win message
   textSize(30);
   fill(255, 0, 0);
   textAlign(CENTER, CENTER);
   text("You Win!", width / 2, height / 2);
-  winMessageShown = true;
+  
 }
 
 
@@ -126,45 +135,33 @@ function drawGrid() {
   }
 }
 
+//highlights the cells that the current pattern is meant to flip
 function overlay(x, y) {
   fill(255, 0, 0, 50);
   noStroke();
 
+  //highlights the crosspattern when its true
   if (crossPattern) {
-    rect(x, y, rectWidth, rectHeight); //center
-
-    // Left
-    if (x > rectWidth) {
-      rect(x - rectWidth, y, rectWidth, rectHeight);
-    }
-    // Right
-    if (x < (NUM_COLS - 1) * rectWidth) {
-      rect(x + rectWidth, y, rectWidth, rectHeight);
-    }
-    //top
-    if (y > rectHeight) {
-      rect(x, y - rectHeight, rectWidth, rectHeight);
-    }
-    //Bottom
-    if (y < (NUM_ROWS - 1) * rectHeight) {
-      rect(x, y + rectHeight, rectWidth, rectHeight);
-    }
+    highlightOverlay(currentCol, currentRow);
+    highlightOverlay(currentCol - 1, currentRow);
+    highlightOverlay(currentCol + 1, currentRow);
+    highlightOverlay(currentCol, currentRow - 1);
+    highlightOverlay(currentCol, currentRow + 1);
   }
+  //highlights a square when crosspattern is false
   else {
-    rect(x, y, rectWidth, rectHeight);//center
-    //right
-    if (x < (NUM_COLS - 1) * rectWidth) {
-      rect(x + rectWidth, y, rectWidth, rectHeight);
-    }
-    //bottom
-    if (y < (NUM_ROWS - 1) *   rectHeight) {
-      rect(x, y + rectHeight, rectWidth, rectHeight);
-    }
-    //bottom right
-    if (x < (NUM_COLS - 1) * rectWidth && y < (NUM_ROWS - 1) * rectHeight) {
-      rect(x + rectWidth, y + rectHeight, rectWidth, rectHeight);
-    }
+    highlightOverlay(currentCol, currentRow);
+    highlightOverlay(currentCol + 1, currentRow);
+    highlightOverlay(currentCol, currentRow + 1);
+    highlightOverlay(currentCol + 1, currentRow + 1);
+  }
+}
 
+
+function highlightOverlay(col, row) {
+  //allows to highlight a specific cell
+  if (col >= 0 && col < NUM_COLS && row >= 0 && row < NUM_ROWS) {
+    rect(col * rectWidth, row * rectHeight, rectWidth, rectHeight);
   }
 }
 
