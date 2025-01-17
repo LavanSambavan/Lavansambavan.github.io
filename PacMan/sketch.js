@@ -8,8 +8,15 @@
 let rows = 25;
 let cols = 25;
 let w, h;
-let pacX, pacY;  // pacmans position
 
+
+//global varaibles for pacman
+
+let pacX, pacY;  // pacmans position
+let pacman; //pacman image
+let pacmanOpen,pacmanHalfOpen, pacmanClosed; //mouth open for pacman
+let ghosts = [];
+let ghostImages = {};
 //Power ups place 5 randomly
 let powerUps = [
   { x: 1, y: 1 }, { x: 23, y: 1 }, { x: 4, y: 21 }, { x: 23, y: 23 }, { x: 20, y: 17 }, {x:1, y:6}
@@ -21,8 +28,8 @@ let maze = [
   "1001011110101111011110101",  //4
   "1111000000000000000000101",   //5
   "1111111011111111111011101",  //6
-  "1000000000000101111011101",  //7
-  "1101111111110001000000001", //8
+  "1000000000000001111011101",  //7
+  "1101111111110101000000001", //8
   "1100011111110101011011111", //9
   "1111010000000000011000011", //10
   "1110010101111111011011011", //11
@@ -42,6 +49,11 @@ let maze = [
   "1111111111111111111111111" //25
 ];
 
+function preload(){
+  pacmanOpen = loadImage("assets/open.png");
+  pacmanClosed = loadImage("assets/closed.png");
+  pacmanHalfOpen = loadImage("assets/openmouth.png");
+}
 function setup() {
   createCanvas(windowWidth, windowHeight);
   rectMode(CORNER);
@@ -49,8 +61,8 @@ function setup() {
   h = height / rows;
 
   //pacmans starting position
-  pacX = 10;
-  pacY = 10;
+  pacX = 1;
+  pacY = 1;
 }
 
 function draw() {
@@ -60,6 +72,7 @@ function draw() {
   pellets();
   eatGhosts();
   mazeDraw();
+  drawPacMan();
 }
 
 function mazeDraw(){
@@ -99,6 +112,22 @@ function eatGhosts() {
 }
 
 function drawPacMan(){
-  ellipse(pacX, pacY, 10, 10)
-  fill(0,0,100);
+  let pacmanImage = frameCount % 25 < 15 ? pacmanOpen : pacmanClosed;
+  image(pacmanImage, pacX*w +0 / 2, pacY * h + 0 / 2, w, h);
+} 
+
+function keyPressed(){
+  let nextX = pacX;
+  let nextY = pacY;
+
+  if (keyCode === LEFT_ARROW) nextX--;
+  else if (keyCode === RIGHT_ARROW) nextX++;
+  else  if (keyCode === DOWN_ARROW) nextY++;
+  else if (keyCode === UP_ARROW) nextY--;
+
+  //checks for collisions with walls
+  if (maze[nextY][nextX] === '0'){
+    pacX = nextX;
+    pacY = nextY;
+  }
 }
