@@ -54,7 +54,7 @@ function drawTree(x1, y1, angle, depth) {
 
 //function that draw the leaf at the end of the branch
 function drawLeaf(x, y, depth){
-    let size = map(depth, 1, leafDepth, 5, 20); //smaller leaves dor deeper branches
+    let size = map(depth, 1, leafDepth,18, 30); //smaller leaves dor deeper branches
     fill(random(0, 255), random(0,255), random(0, 255)); //random colour for each branch
     noStroke();
     ellipse(x, y, size);
