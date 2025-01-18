@@ -8,6 +8,7 @@
 let rows = 25;
 let cols = 25;
 let w, h;
+let currentDirection = null; // allows me to move pacman in a certain direcetion
 
 
 //global varaibles for pacman
@@ -70,9 +71,10 @@ function draw() {
   stroke(0);
   noFill();
   pellets();
-  eatGhosts();
+  eatGhostsPowerup();
   mazeDraw();
   drawPacMan();
+  movePacman();
 }
 
 function mazeDraw(){
@@ -103,7 +105,7 @@ function pellets() {
   }
 }
 
-function eatGhosts() {
+function eatGhostsPowerup() {
   fill(255);
   for (let i = 0; i < powerUps.length; i++) {
     let power = powerUps[i];
@@ -117,17 +119,24 @@ function drawPacMan(){
 } 
 
 function keyPressed(){
+  if (keyCode === LEFT_ARROW || key === 'a') currentDirection = "left";
+  else if (keyCode === RIGHT_ARROW || key === 'd') currentDirection = "right";
+  else  if (keyCode === DOWN_ARROW || key === 's') currentDirection = "down";
+  else if (keyCode === UP_ARROW || key === 'w') currentDirection = "up";
+}
+function movePacman(){
   let nextX = pacX;
   let nextY = pacY;
+  if (currentDirection === "left") nextX--;
+  else if (currentDirection === "right") nextX++;
+  else if (currentDirection === "down") nextY++;
+  else if (currentDirection === "up") nextY--;
 
-  if (keyCode === LEFT_ARROW) nextX--;
-  else if (keyCode === RIGHT_ARROW) nextX++;
-  else  if (keyCode === DOWN_ARROW) nextY++;
-  else if (keyCode === UP_ARROW) nextY--;
-
-  //checks for collisions with walls
-  if (maze[nextY][nextX] === '0'){
-    pacX = nextX;
-    pacY = nextY;
-  }
+    //checks for collisions with walls
+    if (maze[nextY][nextX] === '0'){
+      pacX = nextX;
+      pacY = nextY;
+    }
 }
+
+
