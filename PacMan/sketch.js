@@ -4,23 +4,24 @@
 //
 // Extra for Experts:
 // - describe what you did to take this project "above and beyond"
-
 let rows = 25;
 let cols = 25;
 let w, h;
 let currentDirection = null; // allows me to move pacman in a certain direcetion
-
+let moveCounter = 0; // counter that tracks frames for movement
+let moveInterval = 10; // moves every n amount of frames
+let score = 0;
 
 //global varaibles for pacman
 
 let pacX, pacY;  // pacmans position
 let pacman; //pacman image
-let pacmanOpen,pacmanHalfOpen, pacmanClosed; //mouth open for pacman
+let pacmanOpen, pacmanHalfOpen, pacmanClosed; //mouth open for pacman
 let ghosts = [];
 let ghostImages = {};
 //Power ups place 5 randomly
 let powerUps = [
-  { x: 1, y: 1 }, { x: 23, y: 1 }, { x: 4, y: 21 }, { x: 23, y: 23 }, { x: 20, y: 17 }, {x:1, y:6}
+  { x: 1, y: 1 }, { x: 23, y: 1 }, { x: 4, y: 21 }, { x: 23, y: 23 }, { x: 20, y: 17 }, { x: 1, y: 6 }
 ];
 let maze = [
   "1111111111111111111111111", //1
@@ -50,7 +51,7 @@ let maze = [
   "1111111111111111111111111" //25
 ];
 
-function preload(){
+function preload() {
   pacmanOpen = loadImage("assets/open.png");
   pacmanClosed = loadImage("assets/closed.png");
   pacmanHalfOpen = loadImage("assets/openmouth.png");
@@ -75,16 +76,17 @@ function draw() {
   mazeDraw();
   drawPacMan();
   movePacman();
+  displayScore();
 }
 
-function mazeDraw(){
+function mazeDraw() {
   for (let i = 0; i < rows; i++) {
     for (let j = 0; j < cols; j++) {
       if (maze[i][j] === '1') {
         fill(0, 0, 255);  // Blue color for the walls
         rect(j * w, i * h, w, h);  // Draw the wall
       } else if (maze[i][j] === '2') { // special grid
-        
+
       } else {
         noFill();  // Empty path, so no fill
         rect(j * w, i * h, w, h);  // Draw the empty cell
@@ -113,30 +115,103 @@ function eatGhostsPowerup() {
   }
 }
 
-function drawPacMan(){
-  let pacmanImage = frameCount % 25 < 15 ? pacmanOpen : pacmanClosed;
-  image(pacmanImage, pacX*w +0 / 2, pacY * h + 0 / 2, w, h);
-} 
+function drawPacMan() {
+  push(); // save the current drawing state
 
-function keyPressed(){
-  if (keyCode === LEFT_ARROW || key === 'a') currentDirection = "left";
-  else if (keyCode === RIGHT_ARROW || key === 'd') currentDirection = "right";
-  else  if (keyCode === DOWN_ARROW || key === 's') currentDirection = "down";
-  else if (keyCode === UP_ARROW || key === 'w') currentDirection = "up";
+  // translate 
+  translate(pacX * w + w / 2, pacY * h + h / 2);
+
+  //rotates based on the current direction
+  if (currentDirection === "right") {
+    rotate(0); // default position, facing right
+  }
+  else if (currentDirection === "left") {
+    rotate(PI); // rotates 180 degrees
+  }
+  else if (currentDirection === "up") {
+    rotate(-HALF_PI); // rotates 90 degrees counter clockwise
+  }
+  else if (currentDirection === "down") {
+    rotate(HALF_PI); // rotates 90 degrees
+  }
+
+  // draw pacman
+  let pacmanImage;
+  if (frameCount % 30 < 10) {
+    pacmanImage = pacmanOpen;
+  }
+  else if (frameCount % 30 < 20) {
+    pacmanImage = pacmanHalfOpen;
+  }
+  else {
+    pacmanImage = pacmanClosed;
+  }
+
+  imageMode(CENTER); // center the image
+  image(pacmanImage, 0, 0, w, h);
+
+  pop(); // restore the original drawing state
 }
-function movePacman(){
-  let nextX = pacX;
-  let nextY = pacY;
-  if (currentDirection === "left") nextX--;
-  else if (currentDirection === "right") nextX++;
-  else if (currentDirection === "down") nextY++;
-  else if (currentDirection === "up") nextY--;
+
+function keyPressed() {
+  if ((keyCode === LEFT_ARROW || key === 'a') && maze[pacY][pacX - 1] !== '1') {
+    currentDirection = "left";
+  }
+
+  else if ((keyCode === RIGHT_ARROW || key === 'd') && maze[pacY][pacX + 1] !== '1') {
+    currentDirection = "right";
+  }
+
+  else if ((keyCode === DOWN_ARROW || key === 's') && maze[pacY + 1] && maze[pacY + 1][pacX] !== '1') {
+    currentDirection = "down";
+  }
+
+  else if ((keyCode === UP_ARROW || key === 'w') && maze[pacY + 1] && maze[pacY - 1][pacX] !== '1') {
+    currentDirection = "up";
+  }
+}
+
+function movePacman() {
+  moveCounter++;
+
+  //move pacman if the counter reaches the interval
+  if (moveCounter >= moveInterval) {
+    let nextX = pacX;
+    let nextY = pacY;
+
+    if (currentDirection === "left") nextX--;
+    else if (currentDirection === "right") nextX++;
+    else if (currentDirection === "down") nextY++;
+    else if (currentDirection === "up") nextY--;
 
     //checks for collisions with walls
-    if (maze[nextY][nextX] === '0'){
-      pacX = nextX;
+    if (maze[nextY] && maze[nextY][nextX] !== '1') {
+      //handles wrapping around to the other side
+      if (nextX < 0) {
+        pacX = cols; // wraps to the right side
+      }
+      else if (nextX >= cols) {
+        pacX = -1; //wraps to the left side
+      }
+      else {
+        pacX = nextX;
+      }
       pacY = nextY;
+
+      if (maze[nextY] && maze[nextY][nextX] === '0') {
+        //Eat pellets
+        maze[nextY] = maze[nextY].substring(0, nextX) + ' ' + maze[nextY].substring(nextX + 1);
+        score++;
+      }
     }
+    moveCounter = 0;
+  }
+}
+
+function displayScore() {
+  fill(255);
+  textSize(24);
+  text("Score: " + score, 10, 30);
 }
 
 
