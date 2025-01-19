@@ -21,7 +21,7 @@ let pacmanOpen, pacmanHalfOpen, pacmanClosed; //mouth open for pacman
 //ghosts
 let ghosts = [];
 let ghostImages = {};
-let ghostColours = ["red", "pink", "orange", "cyan"];
+let ghostColours = ["red", "cyan", "orange", "pink"];
 let ghostDirections = ["up", "down", "left", "right"];
 let ghostStartX, ghostStartY;
 
@@ -66,10 +66,29 @@ function preload() {
 
   for (let colour of ghostColours) {
     for (let direction of ghostDirections) {
-      ghostImages[colour + "_" + direction] = loadImage("assets/ghost_" + colour + "_" + direction + ".png");
+      let imagePath = "assets/ghost_" + colour + "_" + direction + ".png";
+      ghostImages[colour + "_" + direction] = loadImage(imagePath,
+        function () {
+          console.log("Image loaded:", imagePath);
+        },
+        function (err) {
+          console.error("Error loading image:", imagePath, err);
+        }
+      );
+      console.log(Object.keys(ghostImages));
     }
   }
 }
+
+function allGhostImagesLoaded() {
+  for (let key in ghostImages) {
+    if (!ghostImages[key]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
   rectMode(CORNER);
@@ -253,34 +272,38 @@ class Ghost {
     let nextX = this.x;
     let nextY = this.y;
 
-    if (this.leaveJail && (this.colour === 'red' || this.colour === 'pink')) {
+    if (!this.leaveJail && (this.colour === 'red' || this.colour === 'pink')) {
       if (this.x === 12 && this.y === 12) {
         this.direction = "up";
         nextY--;
-      } else if (this.x === 12 && this.y === 10) {
+      }
+      else if (this.x === 12 && this.y === 10) {
         this.direction = "right";
         nextX++;
         this.leaveJail = true;
       }
-    } else if (this.random) {
+    }
+    else if (this.random) {
       let directionFound = false;
       while (!directionFound) {
-        this.lastDirection = this.possibleDirections[Math.floor(Math.random() * 4)];
-        if (this.lastDirection === "left" && maze[this.y] && maze[this.y][this.x - 1] !== '1') {
-          nextX--;
-          directionFound = true;
-        } else if (this.lastDirection === "right" && maze[this.y] && maze[this.y][this.x + 1] !== '1') {
-          nextX++;
-          directionFound = true;
-        } else if (this.lastDirection === "down" && maze[this.y + 1] && maze[this.y + 1][this.x] !== '1') {
-          nextY++;
-          directionFound = true;
-        } else if (this.lastDirection === "up" && maze[this.y - 1] && maze[this.y - 1][this.x] !== '1') {
-          nextY--;
-          directionFound = true;
+        if (this.hitWall(nextX, nextY) || Math.random() < 0.1) {
+          this.direction = this.possibleDirections[Math.floor(Math.random() * this.possibleDirections.lenght)];
         }
       }
-    } else {
+      if (this.lastDirection === "left" && this.canMove(this.x - 1, this.y)) {
+        nextX--;
+        directionFound = true;
+      } else if (this.lastDirection === "right" && this.canMove(this.x + 1, this.y)) {
+        directionFound = true;
+      } else if (this.lastDirection === "down" && this.canMove(this.x, this.y + 1)) {
+        nextY++;
+        directionFound = true;
+      } else if (this.lastDirection === "up" && this.canMove(this.x, this.y - 1)) {
+        nextY--;
+        directionFound = true;
+      }
+    }
+    else {
       let bestDirection = "";
       let targetX = pacX;
       let targetY = pacY;
@@ -298,30 +321,47 @@ class Ghost {
       if (targetY > this.y) bestDirection = "down";
       if (targetY < this.y) bestDirection = "up";
 
-      if (bestDirection === "left" && maze[this.y][this.x - 1] !== '1') nextX--;
-      if (bestDirection === "right" && maze[this.y][this.x + 1] !== '1') nextX++;
-      if (bestDirection === "down" && maze[this.y + 1] && maze[this.y + 1][this.x] !== '1') nextY++;
-      if (bestDirection === "up" && maze[this.y - 1] && maze[this.y - 1][this.x] !== '1') nextY--;
+      if (bestDirection === "left" && this.canMove(this.x - 1, this.y)) nextX--;
+      if (bestDirection === "right" && this.canMove(this.x + 1, this.y)) nextX++;
+      if (bestDirection === "down" && this.canMove(this.x, this.y + 1)) nextY++;
+      if (bestDirection === "up" && this.canMove(this.x, this.y - 1)) nextY--;
 
       this.lastDirection = bestDirection;
     }
 
-    if (maze[nextY] && maze[nextY][nextX] !== '1') {
+    if (this.canMove(nextX, nextY)) {
       this.x = nextX;
       this.y = nextY;
     }
   }
 
+  canMove(x, y) {
+    return maze[y] && maze[y][x] !== '1';
+  }
+
+  hitWall(nextX, nextY) {
+    return !this.canMove(nextX, nextY);
+  }
+
   display() {
     imageMode(CENTER);
     let ghostImage = ghostImages[this.colour + "_" + this.lastDirection];
-    image(ghostImage, this.x * w + w / 2, this.y * h + h / 2, w, h);
+    if (ghostImage) { 
+      image(ghostImage, this.x * w + w / 2, this.y * h + h / 2, w, h);
+    } else {
+      console.error("Image not loaded for ", this.colour, this.lastDirection);
+    }
   }
 }
 
 function drawGhosts() {
-  for (let ghost of ghosts) {
-    ghost.display();
+  if (allGhostImagesLoaded()) {
+    for (let ghost of ghosts) {
+     ghost.display();
+    }
+  } 
+  else {
+    console.error("Not all images are loaded yet.");
   }
 }
 
