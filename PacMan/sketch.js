@@ -264,7 +264,7 @@ class Ghost {
     this.y = y;
     this.colour = colour;
     this.random = random;
-    this.lastDirection = "up";
+    this.direction = "up";
     this.leaveJail = false;
     this.possibleDirections = ["up", "down", "left", "right"];
   }
@@ -284,48 +284,28 @@ class Ghost {
         this.leaveJail = true;
       }
     }
-    //else if (this.random) {
-    //   let directionFound = false;
-    //   while (!directionFound) {
-    //     if (this.hitWall(nextX, nextY) || Math.random() < 0.1) {
-    //       this.direction = this.possibleDirections[Math.floor(Math.random() * this.possibleDirections.length)];
-    //     }
-    //   }
-    //   if (this.lastDirection === "left" && this.canMove(this.x - 1, this.y)) {
-    //     nextX--;
-    //     directionFound = true;
-    //   } else if (this.lastDirection === "right" && this.canMove(this.x + 1, this.y)) {
-    //     directionFound = true;
-    //   } else if (this.lastDirection === "down" && this.canMove(this.x, this.y + 1)) {
-    //     nextY++;
-    //     directionFound = true;
-    //   } else if (this.lastDirection === "up" && this.canMove(this.x, this.y - 1)) {
-    //     nextY--;
-    //     directionFound = true;
-    //   }
-    // }
-    else if (this.random){
-      if (this.hitWall(nextX, nextY) || Math.random() <0.1){
+    else if (this.random) {
+      if (this.hitWall(nextX, nextY) || Math.random() < 0.1) {
         let newDirection = this.chooseNewDirection(this.direction);
-        if (newDirection){
+        if (newDirection) {
           this.direction = newDirection;
         }
       }
 
-      if (this.directiom === "left"){
+      if (this.direction === "left") {
         nextX--;
       }
-      else if (this.direction === "right"){
+      else if (this.direction === "right") {
         nextX++;
       }
-      else if (this.direction === "down"){
+      else if (this.direction === "down") {
         nextY++;
       }
-      else if (this.direction ==="up"){
+      else if (this.direction === "up") {
         nextY--;
       }
     }
-    
+
     else {
       let bestDirection = "";
       let targetX = pacX;
@@ -349,7 +329,7 @@ class Ghost {
       if (bestDirection === "down" && this.canMove(this.x, this.y + 1)) nextY++;
       if (bestDirection === "up" && this.canMove(this.x, this.y - 1)) nextY--;
 
-      this.lastDirection = bestDirection;
+      this.direction = bestDirection;
     }
 
     if (this.canMove(nextX, nextY)) {
@@ -358,29 +338,29 @@ class Ghost {
     }
   }
 
-  chooseNewDirection(excludeDirection){
+  chooseNewDirection(excludeDirection) {
     let validDirections = this.possibleDirections.filter(dir => dir !== excludeDirection && this.canMoveInDirection(dir));
-    if (validDirections.length >0){
-      return validDirections[Math.floor(Math.random()* validDirections.length)];
+    if (validDirections.length > 0) {
+      return validDirections[Math.floor(Math.random() * validDirections.length)];
     }
     return null;
   }
 
-  canMoveInDirection(direction){
+  canMoveInDirection(direction) {
     let newX = this.x;
     let newY = this.y;
 
-    if (direction === "left"){
+    if (direction === "left") {
       newX--;
     }
-    else if (direction === "right"){
+    else if (direction === "right") {
       newX++;
     }
-    else if (direction === "down"){
-      newY ++;
+    else if (direction === "down") {
+      newY++;
     }
-    else if (direction === "up"){
-      newY --;
+    else if (direction === "up") {
+      newY--;
     }
     return this.canMove(newX, newY);
   }
@@ -395,14 +375,14 @@ class Ghost {
 
   display() {
     imageMode(CENTER);
-    let ghostImage = ghostImages[this.colour + "_" + this.lastDirection];
+    let ghostImage = ghostImages[this.colour + "_" + this.direction];
     if (ghostImage) {
       image(ghostImage, this.x * w + w / 2, this.y * h + h / 2, w, h);
     } else {
-      console.error("Image not loaded for ", this.colour, this.lastDirection);
+      console.error("Image not loaded for ", this.colour, this.direction);
     }
   }
-}
+} 
 
 function drawGhosts() {
   if (allGhostImagesLoaded()) {
