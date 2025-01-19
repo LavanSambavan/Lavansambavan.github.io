@@ -269,67 +269,118 @@ class Ghost {
     this.possibleDirections = ["up", "down", "left", "right"];
   }
 
-  move() {
+  // move() {
+  //   let nextX = this.x;
+  //   let nextY = this.y;
+
+  //   if (!this.leaveJail && (this.colour === 'red' || this.colour === 'pink')) {
+  //     if (this.x === 12 && this.y === 12) {
+  //       this.direction = "up";
+  //       nextY--;
+  //     }
+  //     else if (this.x === 12 && this.y === 11) {
+  //       this.direction = "up";
+  //       nextY--;
+  //     }
+  //     else if (this.x === 12 && this.y === 10) {
+  //       this.direction = "right";
+  //       nextX++;
+  //       this.leaveJail = true;
+  //     }
+  //   }
+  //   else if (this.random) {
+  //     if (this.hitWall(nextX, nextY) || Math.random() < 0.1) {
+  //       let newDirection = this.chooseNewDirection(this.direction);
+  //       if (newDirection) {
+  //         this.direction = newDirection;
+  //       }
+  //     }
+  //     else {
+  //       if (this.direction === "left") {
+  //         nextX--;
+  //       }
+  //       else if (this.direction === "right") {
+  //         nextX++;
+  //       }
+  //       else if (this.direction === "down") {
+  //         nextY++;
+  //       }
+  //       else if (this.direction === "up") {
+  //         nextY--;
+  //       }
+  //     }
+  //   }
+  //   else {
+  //     let bestDirection = "";
+  //     let targetX = pacX;
+  //     let targetY = pacY;
+
+  //     if (this.colour === 'cyan') {
+  //       targetX = pacX + 2;
+  //       targetY = pacY + 2;
+  //     } else if (this.colour === 'orange') {
+  //       targetX = pacX - 2;
+  //       targetY = pacY - 2;
+  //     }
+
+  //     if (targetX > this.x) bestDirection = "right";
+  //     if (targetX < this.x) bestDirection = "left";
+  //     if (targetY > this.y) bestDirection = "down";
+  //     if (targetY < this.y) bestDirection = "up";
+
+  //     if (bestDirection === "left" && this.canMove(this.x - 1, this.y)) nextX--;
+  //     if (bestDirection === "right" && this.canMove(this.x + 1, this.y)) nextX++;
+  //     if (bestDirection === "down" && this.canMove(this.x, this.y + 1)) nextY++;
+  //     if (bestDirection === "up" && this.canMove(this.x, this.y - 1)) nextY--;
+
+  //     this.direction = bestDirection;
+  //   }
+
+  //   if (this.canMove(nextX, nextY)) {
+  //     this.x = nextX;
+  //     this.y = nextY;
+  //   }
+  // }
+
+  move(pacX, pacY) {
     let nextX = this.x;
     let nextY = this.y;
 
-    if (!this.leaveJail && (this.colour === 'red' || this.colour === 'pink')) {
-      if (this.x === 12 && this.y === 12) {
+    if (!this.leaveJail && (this.colour === 'red' || this.colour === 'pink')){
+      // Add the logic for the red and pink ghosts to exit jail
+      if (this.x === 12 && this.y === 12 ) {
         this.direction = "up";
         nextY--;
       }
-      else if (this.x === 12 && this.y === 10) {
+      else if (this.x === 12 && this.y === 11){
+        this.direction = "up";
+        nextY--;
+      }
+      else if (this.x === 12 && this.y === 10){
         this.direction = "right";
         nextX++;
         this.leaveJail = true;
       }
     }
     else if (this.random) {
-      if (this.hitWall(nextX, nextY) || Math.random() < 0.1) {
+      // Random movement for red and pink ghosts
+      if (this.hitWall(nextX, nextY) || Math.random() < 0.01) {
         let newDirection = this.chooseNewDirection(this.direction);
-        if (newDirection) {
+        if (newDirection){
           this.direction = newDirection;
         }
-      }
-
-      if (this.direction === "left") {
-        nextX--;
-      }
-      else if (this.direction === "right") {
-        nextX++;
-      }
-      else if (this.direction === "down") {
-        nextY++;
-      }
-      else if (this.direction === "up") {
-        nextY--;
-      }
+      } 
+      else {
+        this.applyDirection(nextX, nextY);
+      }  
     }
-
     else {
-      let bestDirection = "";
-      let targetX = pacX;
-      let targetY = pacY;
-
-      if (this.colour === 'cyan') {
-        targetX = pacX + 2;
-        targetY = pacY + 2;
-      } else if (this.colour === 'orange') {
-        targetX = pacX - 2;
-        targetY = pacY - 2;
+      // Chase pacman 
+      let bestDirection = this.determineBestDirection(pacX, pacY);
+      if (bestDirection){
+        this.direction = bestDirection;
       }
-
-      if (targetX > this.x) bestDirection = "right";
-      if (targetX < this.x) bestDirection = "left";
-      if (targetY > this.y) bestDirection = "down";
-      if (targetY < this.y) bestDirection = "up";
-
-      if (bestDirection === "left" && this.canMove(this.x - 1, this.y)) nextX--;
-      if (bestDirection === "right" && this.canMove(this.x + 1, this.y)) nextX++;
-      if (bestDirection === "down" && this.canMove(this.x, this.y + 1)) nextY++;
-      if (bestDirection === "up" && this.canMove(this.x, this.y - 1)) nextY--;
-
-      this.direction = bestDirection;
+      this.applyDirection(nextX, nextY);
     }
 
     if (this.canMove(nextX, nextY)) {
@@ -337,6 +388,40 @@ class Ghost {
       this.y = nextY;
     }
   }
+
+  applyDirection(nextX, nextY) {
+    this.x = nextX;
+    this.y = nextY;
+    
+    if (this.direction === "left") this.x--;
+    if (this.direction === "right") this.x++;
+    if (this.direction === "down") this.y++;
+    if (this.direction === "up") this.y--;
+  }
+
+  determineBestDirection(pacX, pacY) {
+    let targetX = pacX;
+    let targetY = pacY;
+
+    if (this.colour === 'cyan'){
+      targetX = pacX + 2;
+      targetY = pacY + 2;
+    }
+    else if (this.colour === 'orange'){
+      targetX = pacX - 2;
+      targetY = pacY - 2;
+    }
+
+    let bestDirection = "";
+    if (targetX > this.x && this.canMove(this.x + 1, this.y)) bestDirection = "right";
+    if (targetX < this.x && this.canMove(this.x - 1, this.y)) bestDirection = "left";
+    if (targetY > this.y && this.canMove(this.x, this.y + 1)) bestDirection = "down";
+    if (targetY < this.y && this.canMove(this.x, this.y - 1)) bestDirection = "up";
+  
+    return bestDirection;
+
+  }
+
 
   chooseNewDirection(excludeDirection) {
     let validDirections = this.possibleDirections.filter(dir => dir !== excludeDirection && this.canMoveInDirection(dir));
@@ -399,7 +484,7 @@ function moveGhosts() {
   ghostMoveCounter++;
   if (ghostMoveCounter >= ghostMoveInterval) {
     for (let ghost of ghosts) {
-      ghost.move();
+      ghost.move(pacX, pacY);
     }
     ghostMoveCounter = 0;
   }
