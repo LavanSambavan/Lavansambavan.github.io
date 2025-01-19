@@ -75,7 +75,7 @@ function preload() {
           console.error("Error loading image:", imagePath, err);
         }
       );
-      console.log(Object.keys(ghostImages));
+      //console.log(Object.keys(ghostImages));
     }
   }
 }
@@ -122,6 +122,7 @@ function draw() {
   drawGhosts();
   moveGhosts();
   ghostHitPacman();
+  allGhostImagesLoaded();
 }
 
 function mazeDraw() {
@@ -263,7 +264,7 @@ class Ghost {
     this.y = y;
     this.colour = colour;
     this.random = random;
-    this.lastDirection = "up";
+    this.direction = "up";
     this.leaveJail = false;
     this.possibleDirections = ["up", "down", "left", "right"];
   }
@@ -284,25 +285,27 @@ class Ghost {
       }
     }
     else if (this.random) {
-      let directionFound = false;
-      while (!directionFound) {
-        if (this.hitWall(nextX, nextY) || Math.random() < 0.1) {
-          this.direction = this.possibleDirections[Math.floor(Math.random() * this.possibleDirections.lenght)];
+      if (this.hitWall(nextX, nextY) || Math.random() < 0.1) {
+        let newDirection = this.chooseNewDirection(this.direction);
+        if (newDirection) {
+          this.direction = newDirection;
         }
       }
-      if (this.lastDirection === "left" && this.canMove(this.x - 1, this.y)) {
+
+      if (this.direction === "left") {
         nextX--;
-        directionFound = true;
-      } else if (this.lastDirection === "right" && this.canMove(this.x + 1, this.y)) {
-        directionFound = true;
-      } else if (this.lastDirection === "down" && this.canMove(this.x, this.y + 1)) {
+      }
+      else if (this.direction === "right") {
+        nextX++;
+      }
+      else if (this.direction === "down") {
         nextY++;
-        directionFound = true;
-      } else if (this.lastDirection === "up" && this.canMove(this.x, this.y - 1)) {
+      }
+      else if (this.direction === "up") {
         nextY--;
-        directionFound = true;
       }
     }
+
     else {
       let bestDirection = "";
       let targetX = pacX;
@@ -326,13 +329,40 @@ class Ghost {
       if (bestDirection === "down" && this.canMove(this.x, this.y + 1)) nextY++;
       if (bestDirection === "up" && this.canMove(this.x, this.y - 1)) nextY--;
 
-      this.lastDirection = bestDirection;
+      this.direction = bestDirection;
     }
 
     if (this.canMove(nextX, nextY)) {
       this.x = nextX;
       this.y = nextY;
     }
+  }
+
+  chooseNewDirection(excludeDirection) {
+    let validDirections = this.possibleDirections.filter(dir => dir !== excludeDirection && this.canMoveInDirection(dir));
+    if (validDirections.length > 0) {
+      return validDirections[Math.floor(Math.random() * validDirections.length)];
+    }
+    return null;
+  }
+
+  canMoveInDirection(direction) {
+    let newX = this.x;
+    let newY = this.y;
+
+    if (direction === "left") {
+      newX--;
+    }
+    else if (direction === "right") {
+      newX++;
+    }
+    else if (direction === "down") {
+      newY++;
+    }
+    else if (direction === "up") {
+      newY--;
+    }
+    return this.canMove(newX, newY);
   }
 
   canMove(x, y) {
@@ -345,21 +375,21 @@ class Ghost {
 
   display() {
     imageMode(CENTER);
-    let ghostImage = ghostImages[this.colour + "_" + this.lastDirection];
-    if (ghostImage) { 
+    let ghostImage = ghostImages[this.colour + "_" + this.direction];
+    if (ghostImage) {
       image(ghostImage, this.x * w + w / 2, this.y * h + h / 2, w, h);
     } else {
-      console.error("Image not loaded for ", this.colour, this.lastDirection);
+      console.error("Image not loaded for ", this.colour, this.direction);
     }
   }
-}
+} 
 
 function drawGhosts() {
   if (allGhostImagesLoaded()) {
     for (let ghost of ghosts) {
-     ghost.display();
+      ghost.display();
     }
-  } 
+  }
   else {
     console.error("Not all images are loaded yet.");
   }
