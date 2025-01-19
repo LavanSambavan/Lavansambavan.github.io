@@ -7,7 +7,7 @@
 let rows = 25;
 let cols = 25;
 let w, h;
-let currentDirection = null; // allows me to move pacman in a certain direcetion
+let currentDirection; // allows me to move pacman in a certain direcetion
 let moveCounter = 0; // counter that tracks frames for movement
 let moveInterval = 10; // moves every n amount of frames
 let score = 0;
@@ -17,8 +17,16 @@ let score = 0;
 let pacX, pacY;  // pacmans position
 let pacman; //pacman image
 let pacmanOpen, pacmanHalfOpen, pacmanClosed; //mouth open for pacman
+
+//ghosts
 let ghosts = [];
 let ghostImages = {};
+let ghostColours = ["red", "pink", "orange", "cyan"];
+let ghostDirections = ["up", "down", "left", "right"];
+let ghostStartX, ghostStartY;
+
+let ghostMoveCounter = 0;
+let ghostMoveInterval = 10;
 //Power ups place 5 randomly
 let powerUps = [
   { x: 1, y: 1 }, { x: 23, y: 1 }, { x: 4, y: 21 }, { x: 23, y: 23 }, { x: 20, y: 17 }, { x: 1, y: 6 }
@@ -34,7 +42,7 @@ let maze = [
   "1101111111110101000000001", //8
   "1100011111110101011011111", //9
   "1111010000000000011000011", //10
-  "1110010101111111011011011", //11
+  "1110010101112111011011011", //11
   "1110110101222221000001011",  //12
   "0000110101222221011101000", //13
   "1110000001222221000001011", //14
@@ -55,6 +63,12 @@ function preload() {
   pacmanOpen = loadImage("assets/open.png");
   pacmanClosed = loadImage("assets/closed.png");
   pacmanHalfOpen = loadImage("assets/openmouth.png");
+
+  for (let colour of ghostColours) {
+    for (let direction of ghostDirections) {
+      ghostImages[colour + "_" + direction] = loadImage("assets/ghost_" + colour + "_" + direction + ".png");
+    }
+  }
 }
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -65,6 +79,15 @@ function setup() {
   //pacmans starting position
   pacX = 1;
   pacY = 1;
+
+  //ghosts starting position
+  ghostStartX = 12;
+  ghostStartY = 12;
+
+  for (let i = 0; i < ghostColours.length; i++) {
+    let random = (i < 2);
+    ghosts.push(new Ghost(ghostStartX, ghostStartY, ghostColours[i], random));
+  }
 }
 
 function draw() {
@@ -77,6 +100,9 @@ function draw() {
   drawPacMan();
   movePacman();
   displayScore();
+  drawGhosts();
+  moveGhosts();
+  ghostHitPacman();
 }
 
 function mazeDraw() {
@@ -114,6 +140,8 @@ function eatGhostsPowerup() {
     ellipse(power.x * w + w / 2, power.y * h + h / 2, w / 2, h / 2);
   }
 }
+
+//PACMAN CODE STARTS HERE
 
 function drawPacMan() {
   push(); // save the current drawing state
@@ -208,6 +236,117 @@ function movePacman() {
   }
 }
 
+//GHOSTS CODE STARTS HERE                                                                              
+
+class Ghost {
+  constructor(x, y, colour, random) {
+    this.x = x;
+    this.y = y;
+    this.colour = colour;
+    this.random = random;
+    this.lastDirection = "up";
+    this.leaveJail = false;
+    this.possibleDirections = ["up", "down", "left", "right"];
+  }
+
+  move() {
+    let nextX = this.x;
+    let nextY = this.y;
+
+    if (this.leaveJail && (this.colour === 'red' || this.colour === 'pink')) {
+      if (this.x === 12 && this.y === 12) {
+        this.direction = "up";
+        nextY--;
+      } else if (this.x === 12 && this.y === 10) {
+        this.direction = "right";
+        nextX++;
+        this.leaveJail = true;
+      }
+    } else if (this.random) {
+      let directionFound = false;
+      while (!directionFound) {
+        this.lastDirection = this.possibleDirections[Math.floor(Math.random() * 4)];
+        if (this.lastDirection === "left" && maze[this.y] && maze[this.y][this.x - 1] !== '1') {
+          nextX--;
+          directionFound = true;
+        } else if (this.lastDirection === "right" && maze[this.y] && maze[this.y][this.x + 1] !== '1') {
+          nextX++;
+          directionFound = true;
+        } else if (this.lastDirection === "down" && maze[this.y + 1] && maze[this.y + 1][this.x] !== '1') {
+          nextY++;
+          directionFound = true;
+        } else if (this.lastDirection === "up" && maze[this.y - 1] && maze[this.y - 1][this.x] !== '1') {
+          nextY--;
+          directionFound = true;
+        }
+      }
+    } else {
+      let bestDirection = "";
+      let targetX = pacX;
+      let targetY = pacY;
+
+      if (this.colour === 'cyan') {
+        targetX = pacX + 2;
+        targetY = pacY + 2;
+      } else if (this.colour === 'orange') {
+        targetX = pacX - 2;
+        targetY = pacY - 2;
+      }
+
+      if (targetX > this.x) bestDirection = "right";
+      if (targetX < this.x) bestDirection = "left";
+      if (targetY > this.y) bestDirection = "down";
+      if (targetY < this.y) bestDirection = "up";
+
+      if (bestDirection === "left" && maze[this.y][this.x - 1] !== '1') nextX--;
+      if (bestDirection === "right" && maze[this.y][this.x + 1] !== '1') nextX++;
+      if (bestDirection === "down" && maze[this.y + 1] && maze[this.y + 1][this.x] !== '1') nextY++;
+      if (bestDirection === "up" && maze[this.y - 1] && maze[this.y - 1][this.x] !== '1') nextY--;
+
+      this.lastDirection = bestDirection;
+    }
+
+    if (maze[nextY] && maze[nextY][nextX] !== '1') {
+      this.x = nextX;
+      this.y = nextY;
+    }
+  }
+
+  display() {
+    imageMode(CENTER);
+    let ghostImage = ghostImages[this.colour + "_" + this.lastDirection];
+    image(ghostImage, this.x * w + w / 2, this.y * h + h / 2, w, h);
+  }
+}
+
+function drawGhosts() {
+  for (let ghost of ghosts) {
+    ghost.display();
+  }
+}
+
+function moveGhosts() {
+  ghostMoveCounter++;
+  if (ghostMoveCounter >= ghostMoveInterval) {
+    for (let ghost of ghosts) {
+      ghost.move();
+    }
+    ghostMoveCounter = 0;
+  }
+}
+
+
+function ghostHitPacman() {
+  for (let ghost of ghosts) {
+    if (pacX === ghost.x && pacY === ghost.y) {
+      noLoop();
+      fill(255, 0, 0);
+      textSize(48);
+      text("Game Over!", width / 2 - 100, height / 2);
+    }
+  }
+}
+
 function displayScore() {
   fill(255);
   textSize(24);
@@ -215,4 +354,3 @@ function displayScore() {
 }
 
 
-asdf
