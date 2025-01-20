@@ -21,16 +21,21 @@ let pacmanOpen, pacmanHalfOpen, pacmanClosed; //mouth open for pacman
 //ghosts
 let ghosts = [];
 let ghostImages = {};
-let ghostColours = ["red", "cyan", "orange", "pink"];
+let ghostColours = ["red", "pink", "cyan", "orange"];
 let ghostDirections = ["up", "down", "left", "right"];
 let ghostStartX, ghostStartY;
 
 let ghostMoveCounter = 0;
 let ghostMoveInterval = 10;
+
 //Power ups place 5 randomly
 let powerUps = [
   { x: 1, y: 1 }, { x: 23, y: 1 }, { x: 4, y: 21 }, { x: 23, y: 23 }, { x: 20, y: 17 }, { x: 1, y: 6 }
 ];
+let isPowerUpActive = false;
+let powerUpTimer;
+
+//draws the maze a 0 is empty space 1 is wall, 2 is special case for ghosts
 let maze = [
   "1111111111111111111111111", //1
   "1000000000100000000000001", //2
@@ -63,6 +68,7 @@ function preload() {
   pacmanOpen = loadImage("assets/open.png");
   pacmanClosed = loadImage("assets/closed.png");
   pacmanHalfOpen = loadImage("assets/openmouth.png");
+  vulnerableGhost = loadImage("assets/vulnerable.png");
 
   for (let colour of ghostColours) {
     for (let direction of ghostDirections) {
@@ -154,10 +160,43 @@ function pellets() {
 }
 
 function eatGhostsPowerup() {
-  fill(255);
   for (let i = 0; i < powerUps.length; i++) {
     let power = powerUps[i];
-    ellipse(power.x * w + w / 2, power.y * h + h / 2, w / 2, h / 2);
+    if (power && pacX === power.x && pacY === power.y) {
+      //eats power up
+      powerUps.splice(i, 1);
+      acivatePowerUp();
+      return;
+    }
+    //draws the remaining power ups
+    if (power) {
+      fill(255, 255, 0);
+      ellipse(power.x * w + w / 2, power.y * h + h / 2, w / 2, h / 2);
+    }
+  }
+}
+
+function acivatePowerUp() {
+  isPowerUpActive = true;
+  //changes the ghosts to the vulnerable state
+  for (let ghost of ghosts) {
+    ghost.vulnerable = true;
+    ghost.direction = "vulnerable"; //will use the vulnerable ghost image
+  }
+
+  clearTimeout(powerUpTimer);
+  powerUpTimer = setTimeout(() => {
+    deactivatePowerUp();
+  }, 5000);
+}
+
+function deactivatePowerUp() {
+  isPowerUpActive = false;
+
+  //resets the ghosts to its normal state
+  for (let ghost of ghosts) {
+    ghost.vulnerable = false;
+    ghost.direction = "up";
   }
 }
 
@@ -267,120 +306,60 @@ class Ghost {
     this.direction = "up";
     this.leaveJail = false;
     this.possibleDirections = ["up", "down", "left", "right"];
+    this.vulnerable = false;
   }
-
-  // move() {
-  //   let nextX = this.x;
-  //   let nextY = this.y;
-
-  //   if (!this.leaveJail && (this.colour === 'red' || this.colour === 'pink')) {
-  //     if (this.x === 12 && this.y === 12) {
-  //       this.direction = "up";
-  //       nextY--;
-  //     }
-  //     else if (this.x === 12 && this.y === 11) {
-  //       this.direction = "up";
-  //       nextY--;
-  //     }
-  //     else if (this.x === 12 && this.y === 10) {
-  //       this.direction = "right";
-  //       nextX++;
-  //       this.leaveJail = true;
-  //     }
-  //   }
-  //   else if (this.random) {
-  //     if (this.hitWall(nextX, nextY) || Math.random() < 0.1) {
-  //       let newDirection = this.chooseNewDirection(this.direction);
-  //       if (newDirection) {
-  //         this.direction = newDirection;
-  //       }
-  //     }
-  //     else {
-  //       if (this.direction === "left") {
-  //         nextX--;
-  //       }
-  //       else if (this.direction === "right") {
-  //         nextX++;
-  //       }
-  //       else if (this.direction === "down") {
-  //         nextY++;
-  //       }
-  //       else if (this.direction === "up") {
-  //         nextY--;
-  //       }
-  //     }
-  //   }
-  //   else {
-  //     let bestDirection = "";
-  //     let targetX = pacX;
-  //     let targetY = pacY;
-
-  //     if (this.colour === 'cyan') {
-  //       targetX = pacX + 2;
-  //       targetY = pacY + 2;
-  //     } else if (this.colour === 'orange') {
-  //       targetX = pacX - 2;
-  //       targetY = pacY - 2;
-  //     }
-
-  //     if (targetX > this.x) bestDirection = "right";
-  //     if (targetX < this.x) bestDirection = "left";
-  //     if (targetY > this.y) bestDirection = "down";
-  //     if (targetY < this.y) bestDirection = "up";
-
-  //     if (bestDirection === "left" && this.canMove(this.x - 1, this.y)) nextX--;
-  //     if (bestDirection === "right" && this.canMove(this.x + 1, this.y)) nextX++;
-  //     if (bestDirection === "down" && this.canMove(this.x, this.y + 1)) nextY++;
-  //     if (bestDirection === "up" && this.canMove(this.x, this.y - 1)) nextY--;
-
-  //     this.direction = bestDirection;
-  //   }
-
-  //   if (this.canMove(nextX, nextY)) {
-  //     this.x = nextX;
-  //     this.y = nextY;
-  //   }
-  // }
 
   move(pacX, pacY) {
     let nextX = this.x;
     let nextY = this.y;
 
-    if (!this.leaveJail && (this.colour === 'red' || this.colour === 'pink')){
+    if (!this.leaveJail && (this.colour === 'red' || this.colour === 'pink')) {
       // Add the logic for the red and pink ghosts to exit jail
-      if (this.x === 12 && this.y === 12 ) {
+      if (this.x === 12 && this.y === 12) {
         this.direction = "up";
         nextY--;
       }
-      else if (this.x === 12 && this.y === 11){
+      else if (this.x === 12 && this.y === 11) {
         this.direction = "up";
         nextY--;
       }
-      else if (this.x === 12 && this.y === 10){
+      else if (this.x === 12 && this.y === 10) {
         this.direction = "right";
         nextX++;
         this.leaveJail = true;
       }
     }
-    else if (this.random) {
+    else if ((this.random) && (this.colour === 'red' || this.colour === 'pink')) {
       // Random movement for red and pink ghosts
-      if (this.hitWall(nextX, nextY) || Math.random() < 0.01) {
+      if (this.hitWall(nextX, nextY) || Math.random() < 0.1) {
         let newDirection = this.chooseNewDirection(this.direction);
-        if (newDirection){
+        if (newDirection) {
           this.direction = newDirection;
         }
-      } 
-      else {
-        this.applyDirection(nextX, nextY);
-      }  
-    }
-    else {
-      // Chase pacman 
-      let bestDirection = this.determineBestDirection(pacX, pacY);
-      if (bestDirection){
-        this.direction = bestDirection;
       }
-      this.applyDirection(nextX, nextY);
+      else {
+        if (this.direction === "left") {
+          nextX--;
+        }
+        else if (this.direction === "right") {
+          nextX++;
+        }
+        else if (this.direction === "down") {
+          nextY++;
+        }
+        else if (this.direction === "up") {
+          nextY--;
+        }
+      }
+    }
+    else if (this.colour === 'orange' || this.colour === 'cyan') {
+      // Chase pacman 
+      let bestDirection = this.getBestDirection(pacX, pacY);
+      if (bestDirection === "left" && this.canMove(this.x - 1, this.y)) nextX--;
+      if (bestDirection === "right" && this.canMove(this.x + 1, this.y)) nextX++;
+      if (bestDirection === "down" && this.canMove(this.x, this.y + 1)) nextY++;
+      if (bestDirection === "up" && this.canMove(this.x, this.y - 1)) nextY--;
+      this.direction = bestDirection;
     }
 
     if (this.canMove(nextX, nextY)) {
@@ -389,35 +368,24 @@ class Ghost {
     }
   }
 
-  applyDirection(nextX, nextY) {
-    this.x = nextX;
-    this.y = nextY;
-    
-    if (this.direction === "left") this.x--;
-    if (this.direction === "right") this.x++;
-    if (this.direction === "down") this.y++;
-    if (this.direction === "up") this.y--;
-  }
-
-  determineBestDirection(pacX, pacY) {
+  getBestDirection(pacX, pacY) {
+    let bestDirection = "";
     let targetX = pacX;
     let targetY = pacY;
 
-    if (this.colour === 'cyan'){
+    if (this.colour === 'cyan') {
       targetX = pacX + 2;
       targetY = pacY + 2;
-    }
-    else if (this.colour === 'orange'){
+    } else if (this.colour === 'orange') {
       targetX = pacX - 2;
       targetY = pacY - 2;
     }
 
-    let bestDirection = "";
-    if (targetX > this.x && this.canMove(this.x + 1, this.y)) bestDirection = "right";
-    if (targetX < this.x && this.canMove(this.x - 1, this.y)) bestDirection = "left";
-    if (targetY > this.y && this.canMove(this.x, this.y + 1)) bestDirection = "down";
-    if (targetY < this.y && this.canMove(this.x, this.y - 1)) bestDirection = "up";
-  
+    if (targetX > this.x) bestDirection = "right";
+    if (targetX < this.x) bestDirection = "left";
+    if (targetY > this.y) bestDirection = "down";
+    if (targetY < this.y) bestDirection = "up";
+
     return bestDirection;
 
   }
@@ -460,14 +428,20 @@ class Ghost {
 
   display() {
     imageMode(CENTER);
-    let ghostImage = ghostImages[this.colour + "_" + this.direction];
+    let ghostImage;
+    if (this.vulnerable) {
+      ghostImage = vulnerableGhost;
+    }
+    else {
+      ghostImage = ghostImages[this.colour + "_" + this.direction];
+    }
     if (ghostImage) {
       image(ghostImage, this.x * w + w / 2, this.y * h + h / 2, w, h);
     } else {
       console.error("Image not loaded for ", this.colour, this.direction);
     }
   }
-} 
+}
 
 function drawGhosts() {
   if (allGhostImagesLoaded()) {
@@ -494,10 +468,19 @@ function moveGhosts() {
 function ghostHitPacman() {
   for (let ghost of ghosts) {
     if (pacX === ghost.x && pacY === ghost.y) {
-      noLoop();
-      fill(255, 0, 0);
-      textSize(48);
-      text("Game Over!", width / 2 - 100, height / 2);
+      if (isPowerUpActive && ghost.vulnerable) {
+        // Eats the ghost
+        score += 10;
+        ghost.x = ghostStartX;
+        ghost.y = ghostStartY;
+        ghost.vulnerable = false;
+      }
+      else if (!isPowerUpActive) {
+        noLoop();
+        fill(255, 0, 0);
+        textSize(48);
+        text("Game Over!", width / 2 - 100, height / 2);
+      }
     }
   }
 }
