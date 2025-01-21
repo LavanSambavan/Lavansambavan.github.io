@@ -110,8 +110,7 @@ function setup() {
   ghostStartY = 12;
 
   for (let i = 0; i < ghostColours.length; i++) {
-    let random = (i < 2);
-    ghosts.push(new Ghost(ghostStartX, ghostStartY, ghostColours[i], random));
+    ghosts.push(new Ghost(ghostStartX, ghostStartY, ghostColours[i]));
   }
 }
 
@@ -298,134 +297,135 @@ function movePacman() {
 //GHOSTS CODE STARTS HERE                                                                              
 
 class Ghost {
-  constructor(x, y, colour, random) {
+  constructor(x, y, colour) {
     this.x = x;
     this.y = y;
     this.colour = colour;
-    this.random = random;
-    this.direction = "up";
-    this.leaveJail = false;
-    this.possibleDirections = ["up", "down", "left", "right"];
     this.vulnerable = false;
+    this.startX = x;
+    this.startY = y;
+    this.targetX = null;
+    this.targetY = null;
+    this.moveCooldown = 0;
   }
 
   move(pacX, pacY) {
-    let nextX = this.x;
-    let nextY = this.y;
-
-    if (!this.leaveJail && (this.colour === 'red' || this.colour === 'pink')) {
-      // Add the logic for the red and pink ghosts to exit jail
-      if (this.x === 12 && this.y === 12) {
-        this.direction = "up";
-        nextY--;
-      }
-      else if (this.x === 12 && this.y === 11) {
-        this.direction = "up";
-        nextY--;
-      }
-      else if (this.x === 12 && this.y === 10) {
-        this.direction = "right";
-        nextX++;
-        this.leaveJail = true;
-      }
+    if (this.moveCooldown > 0) {
+      this.moveCooldown--;
+      return;
     }
-    else if ((this.random) && (this.colour === 'red' || this.colour === 'pink')) {
-      // Random movement for red and pink ghosts
-      if (this.hitWall(nextX, nextY) || Math.random() < 0.1) {
-        let newDirection = this.chooseNewDirection(this.direction);
-        if (newDirection) {
-          this.direction = newDirection;
-        }
+
+    if (this.colour === "red") {
+      this.targetX = pacX;
+      this.targetY = pacY;
+    }
+    else if (this.colour === "pink") {
+      this.targetX = pacX + 2;
+      this.targetY = pacY + 2;
+    }
+    else if (this.colour === "cyan") {
+      this.targetX = Math.max(0, pacX - 3);
+      this.targetY = Math.max(0, pacY - 3);
+    }
+    else if (this.colour === "orange") {
+      if (this.getDistance(this.x, this.y, pacX, pacY) > 5) {
+        this.targetX = pacX;
+        this.targetY = pacY;
       }
       else {
-        if (this.direction === "left") {
-          nextX--;
+        this.targetX = this.startX;
+        this.targetY = this.startY;
+      }
+    }
+
+    let path = this.findPath(this.x, this.y, this.targetX, this.targetY);
+    if (path.length > 1) {
+      this.x = path[1][0];
+      this.y = path[1][1];
+    }
+
+    this.moveCooldown = 10;
+  }
+
+  findPath(startX, startY, targetX, targetY) {
+    let openSet = [];
+    let closedSet = [];
+    let startNode = { x: startX, y: startY, g: 0, h: 0, f: 0, parent: null };
+    let endNode = { x: targetX, y: targetY };
+    let iterationLimit = 1000;
+
+    openSet.push(startNode);
+
+    while (openSet.length > 0 && iterationLimit > 0) {
+      iterationLimit--;
+
+      let currentNode = openSet.reduce((a, b) => (a.f < b.f ? a : b));
+
+      if (currentNode.x === endNode.x && currentNode.y === endNode.y) {
+        return this.reconstructPath(currentNode);
+      }
+
+      openSet = openSet.filter(node => node !== currentNode);
+      closedSet.push(currentNode);
+
+      let neighbours = this.getNeighbours(currentNode.x, currentNode.y);
+      for (let neighbour of neighbours) {
+        if (closedSet.some(node => node.x === neighbour.x && node.y === neighbour.y)) {
+          continue;
         }
-        else if (this.direction === "right") {
-          nextX++;
+
+        let gScore = currentNode.g + 1;
+        let neighbourNode = openSet.find(node => node.x === neighbour.x && node.y === neighbour.y);
+
+        if (!neighbourNode) {
+          neighbourNode = { x: neighbour.x, y: neighbour.y, g: gScore, h: this.getDistance(neighbour.x, neighbour.y, endNode.x, endNode.y), f: 0, parent: currentNode };
+          neighbourNode.f = neighbourNode.g + neighbourNode.h;
+          openSet.push(neighbourNode);
         }
-        else if (this.direction === "down") {
-          nextY++;
-        }
-        else if (this.direction === "up") {
-          nextY--;
+        else if (gScore < neighbourNode.g) {
+          neighbourNode.g = gScore;
+          neighbourNode.f = neighbourNode.g + neighbourNode.h;
+          neighbourNode.parent = currentNode;
         }
       }
     }
-    else if (this.colour === 'orange' || this.colour === 'cyan') {
-      // Chase pacman 
-      let bestDirection = this.getBestDirection(pacX, pacY);
-      if (bestDirection === "left" && this.canMove(this.x - 1, this.y)) nextX--;
-      if (bestDirection === "right" && this.canMove(this.x + 1, this.y)) nextX++;
-      if (bestDirection === "down" && this.canMove(this.x, this.y + 1)) nextY++;
-      if (bestDirection === "up" && this.canMove(this.x, this.y - 1)) nextY--;
-      this.direction = bestDirection;
-    }
-
-    if (this.canMove(nextX, nextY)) {
-      this.x = nextX;
-      this.y = nextY;
-    }
+    //console.error("Path not found within iteration limit");
+    return [];
   }
 
-  getBestDirection(pacX, pacY) {
-    let bestDirection = "";
-    let targetX = pacX;
-    let targetY = pacY;
-
-    if (this.colour === 'cyan') {
-      targetX = pacX + 2;
-      targetY = pacY + 2;
-    } else if (this.colour === 'orange') {
-      targetX = pacX - 2;
-      targetY = pacY - 2;
+  reconstructPath(node) {
+    let path = [];
+    while (node) {
+      path.unshift([node.x, node.y]);
+      node = node.parent;
     }
-
-    if (targetX > this.x) bestDirection = "right";
-    if (targetX < this.x) bestDirection = "left";
-    if (targetY > this.y) bestDirection = "down";
-    if (targetY < this.y) bestDirection = "up";
-
-    return bestDirection;
-
+    return path;
   }
 
-
-  chooseNewDirection(excludeDirection) {
-    let validDirections = this.possibleDirections.filter(dir => dir !== excludeDirection && this.canMoveInDirection(dir));
-    if (validDirections.length > 0) {
-      return validDirections[Math.floor(Math.random() * validDirections.length)];
+  getNeighbours(x, y) {
+    let neighbours = [];
+    if (this.canMove(x - 1, y)) {
+      neighbours.push({ x: x - 1, y: y });
     }
-    return null;
-  }
-
-  canMoveInDirection(direction) {
-    let newX = this.x;
-    let newY = this.y;
-
-    if (direction === "left") {
-      newX--;
+    if (this.canMove(x + 1, y)) {
+      neighbours.push({ x: x + 1, y: y });
     }
-    else if (direction === "right") {
-      newX++;
+    if (this.canMove(x, y - 1)) {
+      neighbours.push({ x: x, y: y - 1 });
     }
-    else if (direction === "down") {
-      newY++;
+    if (this.canMove(x, y + 1)) {
+      neighbours.push({ x: x, y: y + 1 });
     }
-    else if (direction === "up") {
-      newY--;
-    }
-    return this.canMove(newX, newY);
+    return neighbours;
   }
 
   canMove(x, y) {
     return maze[y] && maze[y][x] !== '1';
   }
 
-  hitWall(nextX, nextY) {
-    return !this.canMove(nextX, nextY);
+  getDistance (x1, y1, x2, y2){
+    return Math.abs(x1 - x2) + Math.abs(y1-y2);
   }
-
   display() {
     imageMode(CENTER);
     let ghostImage;
@@ -455,14 +455,11 @@ function drawGhosts() {
 }
 
 function moveGhosts() {
-  ghostMoveCounter++;
-  if (ghostMoveCounter >= ghostMoveInterval) {
-    for (let ghost of ghosts) {
-      ghost.move(pacX, pacY);
-    }
-    ghostMoveCounter = 0;
+  for (let ghost of ghosts) {
+    ghost.move(pacX, pacY);
   }
 }
+
 
 
 function ghostHitPacman() {
