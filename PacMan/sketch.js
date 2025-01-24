@@ -464,16 +464,16 @@ class Ghost {
   display() {
     imageMode(CENTER);
     let ghostImage;
-    if (this.vulnerable) {
+    if (this.vulnerable) { // if the ghost is vulnerable it displays the vulnerable images
       ghostImage = ghostImages[this.colour + "_vulnerable"];
     }
     else {
-      ghostImage = ghostImages[this.colour + "_" + this.direction];
+      ghostImage = ghostImages[this.colour + "_" + this.direction]; // if the ghosts are normal displays the normal images
     }
     if (ghostImage) {
-      image(ghostImage, this.x * w + w / 2, this.y * h + h / 2, w, h);
+      image(ghostImage, this.x * w + w / 2, this.y * h + h / 2, w, h); // size for yhe ghosts
     } else {
-      console.error("Image not loaded for ", this.colour, this.direction);
+      console.error("Image not loaded for ", this.colour, this.direction); // debugging since some images wouldnt load
     }
   }
 }
@@ -484,12 +484,12 @@ function drawGhosts() {
       ghost.display();
     }
   }
-  else {
+  else { // checks that all ghosts are loaded a debug 
     console.error("Not all images are loaded yet.");
   }
 }
 
-function moveGhosts() {
+function moveGhosts() { // allows the ghosts to move
   for (let ghost of ghosts) {
     ghost.move(pacX, pacY);
   }
@@ -499,19 +499,19 @@ function moveGhosts() {
 
 function ghostHitPacman() {
   for (let ghost of ghosts) {
-    if (pacX === ghost.x && pacY === ghost.y) {
-      if (isPowerUpActive && ghost.vulnerable) {
+    if (pacX === ghost.x && pacY === ghost.y) { // if ghost touches a ghost so is on the same block as the ghost
+      if (isPowerUpActive && ghost.vulnerable) { // and if the ghosts can be eaten so set to vulnerable
         // Eats the ghost
-        score += 10;
-        ghost.x = ghostStartX;
+        score += 10; //increases the score by 10
+        ghost.x = ghostStartX; // ghost teleports back tio the jail
         ghost.y = ghostStartY;
-        ghost.vulnerable = false;
+        ghost.vulnerable = false; //sets the vulnerability to false so the ghost can kill you again
         if (ghost.direction === "vulnerable") {
           ghost.direction = "up";
         }
       }
       else if (!isPowerUpActive) {
-        noLoop();
+        noLoop(); // if the ghosts arents vulnerable and the ghost hits pacman then you lose
         fill(255, 0, 0);
         textSize(48);
         text("Game Over!", width / 2 - 100, height / 2);
@@ -520,13 +520,13 @@ function ghostHitPacman() {
   }
 }
 
-function displayScore() {
+function displayScore() { // shows the score that you have 
   fill(255);
   textSize(24);
   text("Score: " + score, 10, 30);
 }
 
-function checkWin() {
+function checkWin() { // checks if all pellets are eaten if so it prints you win on the screen
   for (let i = 0; i < rows; i++) {
     for (let j = 0; j < cols; j++) {
       if (maze[i][j] === '0') {
