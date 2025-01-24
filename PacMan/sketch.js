@@ -65,15 +65,15 @@ let maze = [
   "1111111111111111111111111" //25
 ];
 
-function preload() {
+function preload() { // loads all the images for pacman
   pacmanOpen = loadImage("assets/open.png");
   pacmanClosed = loadImage("assets/closed.png");
   pacmanHalfOpen = loadImage("assets/openmouth.png");
   vulnerableGhost = loadImage("assets/vulnerable.png");
 
-  for (let colour of ghostColours) {
+  for (let colour of ghostColours) { // loads all the images for the ghosts vulnerable and normal
     for (let direction of ghostDirections) {
-      let imagePath = "assets/ghost_" + colour + "_" + direction + ".png";
+      let imagePath = "assets/ghost_" + colour + "_" + direction + ".png";// normal ghosts
       ghostImages[colour + "_" + direction] = loadImage(imagePath,
         function () {
           console.log("Image loaded:", imagePath);
@@ -85,7 +85,7 @@ function preload() {
     }
   }
 
-  for (let colour of ghostColours) {
+  for (let colour of ghostColours) { // vulnerable ghosts
     let imagePath = "assets/ghost_" + colour + "_vulnerable.png";
     ghostImages[colour + "_vulnerable"] = loadImage(imagePath,
       function () {
@@ -99,7 +99,7 @@ function preload() {
 }
 
 
-function allGhostImagesLoaded() {
+function allGhostImagesLoaded() { // debug function
   for (let key in ghostImages) {
     if (!ghostImages[key]) {
       return false;
@@ -140,7 +140,7 @@ function draw() {
   drawGhosts();
   moveGhosts();
   ghostHitPacman();
-  if (isPowerUpActive && frameCount > powerUpFrameStart + powerUpDuration) {
+  if (isPowerUpActive && frameCount > powerUpFrameStart + powerUpDuration) { // sets time limit for the powerup
     deactivatePowerUp();
   }
   checkWin();
@@ -176,12 +176,12 @@ function pellets() {
 }
 
 function eatGhostsPowerup() {
-  for (let i = 0; i < powerUps.length; i++) {
+  for (let i = 0; i < powerUps.length; i++) { // draws the amounts of powerups necessary
     let power = powerUps[i];
     if (power && pacX === power.x && pacY === power.y) {
       //eats power up
       powerUps.splice(i, 1);
-      acivatePowerUp();
+      acivatePowerUp(); // activates the powerup
       return;
     }
     //draws the remaining power ups
@@ -194,7 +194,7 @@ function eatGhostsPowerup() {
 
 function acivatePowerUp() {
   isPowerUpActive = true;
-  powerUpFrameStart = frameCount;
+  powerUpFrameStart = frameCount; // timing limit on pwerups
   //changes the ghosts to the vulnerable state
   for (let ghost of ghosts) {
     ghost.vulnerable = true;
@@ -203,12 +203,12 @@ function acivatePowerUp() {
 }
 
 function deactivatePowerUp() {
-  isPowerUpActive = false;
+  isPowerUpActive = false; // deactivates the powerups
 
   //resets the ghosts to its normal state
   for (let ghost of ghosts) {
     ghost.vulnerable = false;
-    if (ghost.direction === "vulnerable"){
+    if (ghost.direction === "vulnerable") {
       ghost.direction = "up";
     }
   }
@@ -239,7 +239,7 @@ function drawPacMan() {
   // draw pacman
   let pacmanImage;
   if (frameCount % 30 < 10) {
-    pacmanImage = pacmanOpen;
+    pacmanImage = pacmanOpen; // depending on the frame it changes the costume of pacman
   }
   else if (frameCount % 30 < 20) {
     pacmanImage = pacmanHalfOpen;
@@ -254,7 +254,7 @@ function drawPacMan() {
   pop(); // restore the original drawing state
 }
 
-function keyPressed() {
+function keyPressed() { // key managements for moveemnt of pacman
   if ((keyCode === LEFT_ARROW || key === 'a') && maze[pacY][pacX - 1] !== '1') {
     currentDirection = "left";
   }
@@ -279,14 +279,14 @@ function movePacman() {
   if (moveCounter >= moveInterval) {
     let nextX = pacX;
     let nextY = pacY;
-
+    // allows pacman to move
     if (currentDirection === "left") nextX--;
     else if (currentDirection === "right") nextX++;
     else if (currentDirection === "down") nextY++;
     else if (currentDirection === "up") nextY--;
 
     //checks for collisions with walls
-    if (maze[nextY] && maze[nextY][nextX] !== '1' && maze[nextY][nextX] !=='2') {
+    if (maze[nextY] && maze[nextY][nextX] !== '1' && maze[nextY][nextX] !== '2') {
       //handles wrapping around to the other side
       if (nextX < 0) {
         pacX = cols; // wraps to the right side
@@ -311,8 +311,18 @@ function movePacman() {
 
 //GHOSTS CODE STARTS HERE                                                                              
 
+// My dad helped with ghost movements since I couldnt get it to work on my own, He showed me how to use a
+// pathfinding algorithm for the ghosts to find the shortest path to Pacman
 class Ghost {
+  /* x,y : current position of the ghost
+     colour: color of the ghost
+     vulenerable: indicates if the ghost can be consumed by pacman
+     startX, startY: starting position of the ghost
+     targetX, targetY: target position of the ghost
+     moveCoolDown: delay induced between moves to control the ghost's speed
+  */
   constructor(x, y, colour) {
+    // Initialization
     this.x = x;
     this.y = y;
     this.colour = colour;
@@ -325,25 +335,31 @@ class Ghost {
   }
 
   move(pacX, pacY) {
+    //Move the ghost towards pacman based on its colour and pacman's position
+    
+
+    // If the ghost is in cooldown, decrement the cooldown counter
     if (this.moveCooldown > 0) {
       this.moveCooldown--;
       return;
     }
 
-    if (this.colour === "red") {
+    // Set the target position of the ghost base on the colour
+    if (this.colour === "red") { // Red direct chase path to pacman
+
       this.targetX = pacX;
       this.targetY = pacY;
     }
-    else if (this.colour === "pink") {
+    else if (this.colour === "pink") { // Pink moves slightly ahead of pacman
       this.targetX = pacX + 1;
       this.targetY = pacY;
     }
-    else if (this.colour === "cyan") {
+    else if (this.colour === "cyan") { // Cyan moves to a position slightly behind packman
       this.targetX = Math.max(0, pacX - 3);
       this.targetY = Math.max(0, pacY - 3);
     }
     else if (this.colour === "orange") {
-      if (this.getDistance(this.x, this.y, pacX, pacY) > 5) {
+      if (this.getDistance(this.x, this.y, pacX, pacY) > 5) { // Orange chases pacman if far away otherwise returns to its starting position
         this.targetX = pacX;
         this.targetY = pacY;
       }
@@ -353,81 +369,108 @@ class Ghost {
       }
     }
 
+    // Find the path to the target position
     let path = this.findPath(this.x, this.y, this.targetX, this.targetY);
+
+    // move to the next position in the path if available
     if (path.length > 1) {
       let nextX = path[1][0];
       let nextY = path[1][1];
 
-      if (nextX > this.x){
+      // Determine the move direction
+      if (nextX > this.x) {
         this.direction = "right";
       }
-      else if(nextX< this.x){
+      else if (nextX < this.x) {
         this.direction = "left";
       }
-      else if (nextY > this.y){
+      else if (nextY > this.y) {
         this.direction = "down";
       }
-      else if (nextY < this.y){
+      else if (nextY < this.y) {
         this.direction = "up";
       }
+
+      // Update the ghost position
       this.x = nextX;
       this.y = nextY;
     }
 
+    // reset the move cool down counter
     this.moveCooldown = 10;
   }
 
   findPath(startX, startY, targetX, targetY) {
-    // We use the pathfinding algorithm
-    // g score ( Cost to reach the node from the start)
-    // h score ( Estimated cost from the node to the target)
-    // f score ( Total Esitmated cost (g+h))
+    /*
+     Finds the path from ghost's current position to the target position using pathfinding algorithm
+      g score ( Cost to reach the node from the start)
+      h score ( Estimated cost from the node to the target)
+      f score ( Total Esitmated cost (g+h))
 
+      openSet: contains the cells/positions to be evaluated
+      closedSet: contains the evaluated cells
+      startPosition: defines the starting position
+      endPosition: defines the target position
+      iterationLimit: controls the number of iterations, thus preventing the infinite loop
+    */
     let openSet = [];
     let closedSet = [];
     let startPosition = { x: startX, y: startY, g: 0, h: 0, f: 0, parent: null };
     let endPosition = { x: targetX, y: targetY };
     let iterationLimit = 1000;
 
+    // Add the starting position to the openSet, to evaluate
     openSet.push(startPosition);
 
+    // Path finding loop
     while (openSet.length > 0 && iterationLimit > 0) {
       iterationLimit--;
 
+      // Find the position with the lowest f score
       let currentPosition = openSet.reduce((a, b) => (a.f < b.f ? a : b));
 
+      // If the current position is the target, reconstruct the path
       if (currentPosition.x === endPosition.x && currentPosition.y === endPosition.y) {
         return this.reconstructPath(currentPosition);
       }
 
+      // Move the current position from the open set to the closed set
       openSet = openSet.filter(node => node !== currentPosition);
       closedSet.push(currentPosition);
 
+      // Get the neighbouring positions
       let neighbours = this.getNeighbours(currentPosition.x, currentPosition.y);
       for (let neighbour of neighbours) {
         if (closedSet.some(cell => cell.x === neighbour.x && cell.y === neighbour.y)) {
           continue;
         }
 
+        // Calculate the gscore for the neighbour
         let gScore = currentPosition.g + 1;
         let neighbourPosition = openSet.find(cell => cell.x === neighbour.x && cell.y === neighbour.y);
 
+        // If the neighbour is not in the open set add it.
         if (!neighbourPosition) {
           neighbourPosition = { x: neighbour.x, y: neighbour.y, g: gScore, h: this.getDistance(neighbour.x, neighbour.y, endPosition.x, endPosition.y), f: 0, parent: currentPosition };
           neighbourPosition.f = neighbourPosition.g + neighbourPosition.h;
           openSet.push(neighbourPosition);
         }
         else if (gScore < neighbourPosition.g) {
+          // If the new path to the neighbour is shorter, update its g and f scores and parent
           neighbourPosition.g = gScore;
           neighbourPosition.f = neighbourPosition.g + neighbourPosition.h;
           neighbourPosition.parent = currentPosition;
         }
       }
     }
+
+    // Return an empty path if no path was found
     return [];
   }
 
   reconstructPath(position) {
+    // Reconsturcts the path from the target position back to the start position
+    // using the parent positions, starting from target and builds the path in reverse order
     let path = [];
     while (position) {
       path.unshift([position.x, position.y]);
@@ -437,6 +480,9 @@ class Ghost {
   }
 
   getNeighbours(x, y) {
+    // Finds the neighbouring position the ghost can move to, 
+    // by checking the positions, up, down, left and right and
+    // add them to the list if they can make a valid move.
     let neighbours = [];
     if (this.canMove(x - 1, y)) {
       neighbours.push({ x: x - 1, y: y });
@@ -454,14 +500,17 @@ class Ghost {
   }
 
   canMove(x, y) {
+    // Check if the ghost can move to the given position
     return maze[y] && maze[y][x] !== '1';
   }
 
   getDistance(x1, y1, x2, y2) {
+    // Calculate the distance between two given positions
     return Math.abs(x1 - x2) + Math.abs(y1 - y2);
   }
 
   display() {
+    // Display the appropriate ghost image on the screen
     imageMode(CENTER);
     let ghostImage;
     if (this.vulnerable) { // if the ghost is vulnerable it displays the vulnerable images
@@ -479,6 +528,7 @@ class Ghost {
 }
 
 function drawGhosts() {
+  // Draw all ghosts
   if (allGhostImagesLoaded()) {
     for (let ghost of ghosts) {
       ghost.display();
