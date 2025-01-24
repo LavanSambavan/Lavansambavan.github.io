@@ -11,6 +11,7 @@ let currentDirection; // allows me to move pacman in a certain direcetion
 let moveCounter = 0; // counter that tracks frames for movement
 let moveInterval = 10; // moves every n amount of frames
 let score = 0;
+let highscore = 0;
 
 //global varaibles for pacman
 
@@ -21,26 +22,31 @@ let pacmanOpen, pacmanHalfOpen, pacmanClosed; //mouth open for pacman
 //ghosts
 let ghosts = [];
 let ghostImages = {};
-let ghostColours = ["red", "cyan", "orange", "pink"];
+let ghostColours = ["red", "pink", "cyan", "orange"];
 let ghostDirections = ["up", "down", "left", "right"];
-let ghostStartX, ghostStartY;
+let ghostStartX = 12, ghostStartY = 12;
 
 let ghostMoveCounter = 0;
 let ghostMoveInterval = 10;
-//Power ups place 5 randomly
+
 let powerUps = [
-  { x: 1, y: 1 }, { x: 23, y: 1 }, { x: 4, y: 21 }, { x: 23, y: 23 }, { x: 20, y: 17 }, { x: 1, y: 6 }
+  { x: 1, y: 1 }, { x: 12, y: 4 }, { x: 23, y: 1 }, { x: 4, y: 21 }, { x: 23, y: 23 }, { x: 20, y: 17 }, { x: 1, y: 6 }
 ];
+let isPowerUpActive = false;
+let powerUpFrameStart = 0;
+let powerUpDuration = 300;
+
+//draws the maze a 0 is empty space 1 is wall, 2 is special case for ghosts
 let maze = [
   "1111111111111111111111111", //1
-  "1000000000100000000000001", //2
-  "1011011110101111011111101",  //3
-  "1001011110101111011110101",  //4
-  "1111000000000000000000101",   //5
+  "1000000000000000000000001", //2
+  "1011011110101111011110101",  //3
+  "1011011110101111011110101",  //4
+  "1000000000000000000000101",   //5
   "1111111011111111111011101",  //6
   "1000000000000001111011101",  //7
-  "1101111111110101000000001", //8
-  "1100011111110101011011111", //9
+  "1011111111110101000000001", //8
+  "1000011111110101011011111", //9
   "1111010000000000011000011", //10
   "1110010101112111011011011", //11
   "1110110101222221000001011",  //12
@@ -63,6 +69,7 @@ function preload() {
   pacmanOpen = loadImage("assets/open.png");
   pacmanClosed = loadImage("assets/closed.png");
   pacmanHalfOpen = loadImage("assets/openmouth.png");
+  vulnerableGhost = loadImage("assets/vulnerable.png");
 
   for (let colour of ghostColours) {
     for (let direction of ghostDirections) {
@@ -75,10 +82,22 @@ function preload() {
           console.error("Error loading image:", imagePath, err);
         }
       );
-      //console.log(Object.keys(ghostImages));
     }
   }
+
+  for (let colour of ghostColours) {
+    let imagePath = "assets/ghost_" + colour + "_vulnerable.png";
+    ghostImages[colour + "_vulnerable"] = loadImage(imagePath,
+      function () {
+        console.log("Image vulnerable loaded:", imagePath);
+      },
+      function (err) {
+        console.error("Error loading vulnerable image:", imagePath, err);
+      }
+    );
+  }
 }
+
 
 function allGhostImagesLoaded() {
   for (let key in ghostImages) {
@@ -100,12 +119,10 @@ function setup() {
   pacY = 1;
 
   //ghosts starting position
-  ghostStartX = 12;
-  ghostStartY = 12;
+
 
   for (let i = 0; i < ghostColours.length; i++) {
-    let random = (i < 2);
-    ghosts.push(new Ghost(ghostStartX, ghostStartY, ghostColours[i], random));
+    ghosts.push(new Ghost(ghostStartX, ghostStartY, ghostColours[i]));
   }
 }
 
@@ -113,6 +130,7 @@ function draw() {
   background(0);
   stroke(0);
   noFill();
+  allGhostImagesLoaded();
   pellets();
   eatGhostsPowerup();
   mazeDraw();
@@ -122,7 +140,11 @@ function draw() {
   drawGhosts();
   moveGhosts();
   ghostHitPacman();
-  allGhostImagesLoaded();
+  if (isPowerUpActive && frameCount > powerUpFrameStart + powerUpDuration) {
+    deactivatePowerUp();
+  }
+  checkWin();
+
 }
 
 function mazeDraw() {
@@ -154,10 +176,41 @@ function pellets() {
 }
 
 function eatGhostsPowerup() {
-  fill(255);
   for (let i = 0; i < powerUps.length; i++) {
     let power = powerUps[i];
-    ellipse(power.x * w + w / 2, power.y * h + h / 2, w / 2, h / 2);
+    if (power && pacX === power.x && pacY === power.y) {
+      //eats power up
+      powerUps.splice(i, 1);
+      acivatePowerUp();
+      return;
+    }
+    //draws the remaining power ups
+    if (power) {
+      fill(255, 255, 0);
+      ellipse(power.x * w + w / 2, power.y * h + h / 2, w / 2, h / 2);
+    }
+  }
+}
+
+function acivatePowerUp() {
+  isPowerUpActive = true;
+  powerUpFrameStart = frameCount;
+  //changes the ghosts to the vulnerable state
+  for (let ghost of ghosts) {
+    ghost.vulnerable = true;
+    ghost.direction = "vulnerable"; //will use the vulnerable ghost image
+  }
+}
+
+function deactivatePowerUp() {
+  isPowerUpActive = false;
+
+  //resets the ghosts to its normal state
+  for (let ghost of ghosts) {
+    ghost.vulnerable = false;
+    if (ghost.direction === "vulnerable"){
+      ghost.direction = "up";
+    }
   }
 }
 
@@ -210,11 +263,11 @@ function keyPressed() {
     currentDirection = "right";
   }
 
-  else if ((keyCode === DOWN_ARROW || key === 's') && maze[pacY + 1] && maze[pacY + 1][pacX] !== '1') {
+  else if ((keyCode === DOWN_ARROW || key === 's') && (maze[pacY + 1] && maze[pacY + 1][pacX] !== '1') && (maze[pacY + 1] && maze[pacY + 1][pacX] !== '2')) {
     currentDirection = "down";
   }
 
-  else if ((keyCode === UP_ARROW || key === 'w') && maze[pacY + 1] && maze[pacY - 1][pacX] !== '1') {
+  else if ((keyCode === UP_ARROW || key === 'w') && (maze[pacY + 1] && maze[pacY - 1][pacX] !== '1') && (maze[pacY + 1] && maze[pacY - 1][pacX] !== '2')) {
     currentDirection = "up";
   }
 }
@@ -233,7 +286,7 @@ function movePacman() {
     else if (currentDirection === "up") nextY--;
 
     //checks for collisions with walls
-    if (maze[nextY] && maze[nextY][nextX] !== '1') {
+    if (maze[nextY] && maze[nextY][nextX] !== '1' && maze[nextY][nextX] !=='2') {
       //handles wrapping around to the other side
       if (nextX < 0) {
         pacX = cols; // wraps to the right side
@@ -259,215 +312,171 @@ function movePacman() {
 //GHOSTS CODE STARTS HERE                                                                              
 
 class Ghost {
-  constructor(x, y, colour, random) {
+  constructor(x, y, colour) {
     this.x = x;
     this.y = y;
     this.colour = colour;
-    this.random = random;
-    this.direction = "up";
-    this.leaveJail = false;
-    this.possibleDirections = ["up", "down", "left", "right"];
+    this.vulnerable = false;
+    this.startX = x;
+    this.startY = y;
+    this.targetX = null;
+    this.targetY = null;
+    this.moveCooldown = 0;
   }
 
-  // move() {
-  //   let nextX = this.x;
-  //   let nextY = this.y;
-
-  //   if (!this.leaveJail && (this.colour === 'red' || this.colour === 'pink')) {
-  //     if (this.x === 12 && this.y === 12) {
-  //       this.direction = "up";
-  //       nextY--;
-  //     }
-  //     else if (this.x === 12 && this.y === 11) {
-  //       this.direction = "up";
-  //       nextY--;
-  //     }
-  //     else if (this.x === 12 && this.y === 10) {
-  //       this.direction = "right";
-  //       nextX++;
-  //       this.leaveJail = true;
-  //     }
-  //   }
-  //   else if (this.random) {
-  //     if (this.hitWall(nextX, nextY) || Math.random() < 0.1) {
-  //       let newDirection = this.chooseNewDirection(this.direction);
-  //       if (newDirection) {
-  //         this.direction = newDirection;
-  //       }
-  //     }
-  //     else {
-  //       if (this.direction === "left") {
-  //         nextX--;
-  //       }
-  //       else if (this.direction === "right") {
-  //         nextX++;
-  //       }
-  //       else if (this.direction === "down") {
-  //         nextY++;
-  //       }
-  //       else if (this.direction === "up") {
-  //         nextY--;
-  //       }
-  //     }
-  //   }
-  //   else {
-  //     let bestDirection = "";
-  //     let targetX = pacX;
-  //     let targetY = pacY;
-
-  //     if (this.colour === 'cyan') {
-  //       targetX = pacX + 2;
-  //       targetY = pacY + 2;
-  //     } else if (this.colour === 'orange') {
-  //       targetX = pacX - 2;
-  //       targetY = pacY - 2;
-  //     }
-
-  //     if (targetX > this.x) bestDirection = "right";
-  //     if (targetX < this.x) bestDirection = "left";
-  //     if (targetY > this.y) bestDirection = "down";
-  //     if (targetY < this.y) bestDirection = "up";
-
-  //     if (bestDirection === "left" && this.canMove(this.x - 1, this.y)) nextX--;
-  //     if (bestDirection === "right" && this.canMove(this.x + 1, this.y)) nextX++;
-  //     if (bestDirection === "down" && this.canMove(this.x, this.y + 1)) nextY++;
-  //     if (bestDirection === "up" && this.canMove(this.x, this.y - 1)) nextY--;
-
-  //     this.direction = bestDirection;
-  //   }
-
-  //   if (this.canMove(nextX, nextY)) {
-  //     this.x = nextX;
-  //     this.y = nextY;
-  //   }
-  // }
-
   move(pacX, pacY) {
-    let nextX = this.x;
-    let nextY = this.y;
-
-    if (!this.leaveJail && (this.colour === 'red' || this.colour === 'pink')){
-      // Add the logic for the red and pink ghosts to exit jail
-      if (this.x === 12 && this.y === 12 ) {
-        this.direction = "up";
-        nextY--;
-      }
-      else if (this.x === 12 && this.y === 11){
-        this.direction = "up";
-        nextY--;
-      }
-      else if (this.x === 12 && this.y === 10){
-        this.direction = "right";
-        nextX++;
-        this.leaveJail = true;
-      }
+    if (this.moveCooldown > 0) {
+      this.moveCooldown--;
+      return;
     }
-    else if (this.random) {
-      // Random movement for red and pink ghosts
-      if (this.hitWall(nextX, nextY) || Math.random() < 0.01) {
-        let newDirection = this.chooseNewDirection(this.direction);
-        if (newDirection){
-          this.direction = newDirection;
-        }
-      } 
+
+    if (this.colour === "red") {
+      this.targetX = pacX;
+      this.targetY = pacY;
+    }
+    else if (this.colour === "pink") {
+      this.targetX = pacX + 1;
+      this.targetY = pacY;
+    }
+    else if (this.colour === "cyan") {
+      this.targetX = Math.max(0, pacX - 3);
+      this.targetY = Math.max(0, pacY - 3);
+    }
+    else if (this.colour === "orange") {
+      if (this.getDistance(this.x, this.y, pacX, pacY) > 5) {
+        this.targetX = pacX;
+        this.targetY = pacY;
+      }
       else {
-        this.applyDirection(nextX, nextY);
-      }  
-    }
-    else {
-      // Chase pacman 
-      let bestDirection = this.determineBestDirection(pacX, pacY);
-      if (bestDirection){
-        this.direction = bestDirection;
+        this.targetX = this.startX;
+        this.targetY = this.startY;
       }
-      this.applyDirection(nextX, nextY);
     }
 
-    if (this.canMove(nextX, nextY)) {
+    let path = this.findPath(this.x, this.y, this.targetX, this.targetY);
+    if (path.length > 1) {
+      let nextX = path[1][0];
+      let nextY = path[1][1];
+
+      if (nextX > this.x){
+        this.direction = "right";
+      }
+      else if(nextX< this.x){
+        this.direction = "left";
+      }
+      else if (nextY > this.y){
+        this.direction = "down";
+      }
+      else if (nextY < this.y){
+        this.direction = "up";
+      }
       this.x = nextX;
       this.y = nextY;
     }
+
+    this.moveCooldown = 10;
   }
 
-  applyDirection(nextX, nextY) {
-    this.x = nextX;
-    this.y = nextY;
-    
-    if (this.direction === "left") this.x--;
-    if (this.direction === "right") this.x++;
-    if (this.direction === "down") this.y++;
-    if (this.direction === "up") this.y--;
+  findPath(startX, startY, targetX, targetY) {
+    // We use the pathfinding algorithm
+    // g score ( Cost to reach the node from the start)
+    // h score ( Estimated cost from the node to the target)
+    // f score ( Total Esitmated cost (g+h))
+
+    let openSet = [];
+    let closedSet = [];
+    let startPosition = { x: startX, y: startY, g: 0, h: 0, f: 0, parent: null };
+    let endPosition = { x: targetX, y: targetY };
+    let iterationLimit = 1000;
+
+    openSet.push(startPosition);
+
+    while (openSet.length > 0 && iterationLimit > 0) {
+      iterationLimit--;
+
+      let currentPosition = openSet.reduce((a, b) => (a.f < b.f ? a : b));
+
+      if (currentPosition.x === endPosition.x && currentPosition.y === endPosition.y) {
+        return this.reconstructPath(currentPosition);
+      }
+
+      openSet = openSet.filter(node => node !== currentPosition);
+      closedSet.push(currentPosition);
+
+      let neighbours = this.getNeighbours(currentPosition.x, currentPosition.y);
+      for (let neighbour of neighbours) {
+        if (closedSet.some(cell => cell.x === neighbour.x && cell.y === neighbour.y)) {
+          continue;
+        }
+
+        let gScore = currentPosition.g + 1;
+        let neighbourPosition = openSet.find(cell => cell.x === neighbour.x && cell.y === neighbour.y);
+
+        if (!neighbourPosition) {
+          neighbourPosition = { x: neighbour.x, y: neighbour.y, g: gScore, h: this.getDistance(neighbour.x, neighbour.y, endPosition.x, endPosition.y), f: 0, parent: currentPosition };
+          neighbourPosition.f = neighbourPosition.g + neighbourPosition.h;
+          openSet.push(neighbourPosition);
+        }
+        else if (gScore < neighbourPosition.g) {
+          neighbourPosition.g = gScore;
+          neighbourPosition.f = neighbourPosition.g + neighbourPosition.h;
+          neighbourPosition.parent = currentPosition;
+        }
+      }
+    }
+    return [];
   }
 
-  determineBestDirection(pacX, pacY) {
-    let targetX = pacX;
-    let targetY = pacY;
-
-    if (this.colour === 'cyan'){
-      targetX = pacX + 2;
-      targetY = pacY + 2;
+  reconstructPath(position) {
+    let path = [];
+    while (position) {
+      path.unshift([position.x, position.y]);
+      position = position.parent;
     }
-    else if (this.colour === 'orange'){
-      targetX = pacX - 2;
-      targetY = pacY - 2;
-    }
-
-    let bestDirection = "";
-    if (targetX > this.x && this.canMove(this.x + 1, this.y)) bestDirection = "right";
-    if (targetX < this.x && this.canMove(this.x - 1, this.y)) bestDirection = "left";
-    if (targetY > this.y && this.canMove(this.x, this.y + 1)) bestDirection = "down";
-    if (targetY < this.y && this.canMove(this.x, this.y - 1)) bestDirection = "up";
-  
-    return bestDirection;
-
+    return path;
   }
 
-
-  chooseNewDirection(excludeDirection) {
-    let validDirections = this.possibleDirections.filter(dir => dir !== excludeDirection && this.canMoveInDirection(dir));
-    if (validDirections.length > 0) {
-      return validDirections[Math.floor(Math.random() * validDirections.length)];
+  getNeighbours(x, y) {
+    let neighbours = [];
+    if (this.canMove(x - 1, y)) {
+      neighbours.push({ x: x - 1, y: y });
     }
-    return null;
-  }
-
-  canMoveInDirection(direction) {
-    let newX = this.x;
-    let newY = this.y;
-
-    if (direction === "left") {
-      newX--;
+    if (this.canMove(x + 1, y)) {
+      neighbours.push({ x: x + 1, y: y });
     }
-    else if (direction === "right") {
-      newX++;
+    if (this.canMove(x, y - 1)) {
+      neighbours.push({ x: x, y: y - 1 });
     }
-    else if (direction === "down") {
-      newY++;
+    if (this.canMove(x, y + 1)) {
+      neighbours.push({ x: x, y: y + 1 });
     }
-    else if (direction === "up") {
-      newY--;
-    }
-    return this.canMove(newX, newY);
+    return neighbours;
   }
 
   canMove(x, y) {
     return maze[y] && maze[y][x] !== '1';
   }
 
-  hitWall(nextX, nextY) {
-    return !this.canMove(nextX, nextY);
+  getDistance(x1, y1, x2, y2) {
+    return Math.abs(x1 - x2) + Math.abs(y1 - y2);
   }
 
   display() {
     imageMode(CENTER);
-    let ghostImage = ghostImages[this.colour + "_" + this.direction];
+    let ghostImage;
+    if (this.vulnerable) {
+      ghostImage = ghostImages[this.colour + "_vulnerable"];
+    }
+    else {
+      ghostImage = ghostImages[this.colour + "_" + this.direction];
+    }
     if (ghostImage) {
       image(ghostImage, this.x * w + w / 2, this.y * h + h / 2, w, h);
     } else {
       console.error("Image not loaded for ", this.colour, this.direction);
     }
   }
-} 
+}
 
 function drawGhosts() {
   if (allGhostImagesLoaded()) {
@@ -481,23 +490,32 @@ function drawGhosts() {
 }
 
 function moveGhosts() {
-  ghostMoveCounter++;
-  if (ghostMoveCounter >= ghostMoveInterval) {
-    for (let ghost of ghosts) {
-      ghost.move(pacX, pacY);
-    }
-    ghostMoveCounter = 0;
+  for (let ghost of ghosts) {
+    ghost.move(pacX, pacY);
   }
 }
+
 
 
 function ghostHitPacman() {
   for (let ghost of ghosts) {
     if (pacX === ghost.x && pacY === ghost.y) {
-      noLoop();
-      fill(255, 0, 0);
-      textSize(48);
-      text("Game Over!", width / 2 - 100, height / 2);
+      if (isPowerUpActive && ghost.vulnerable) {
+        // Eats the ghost
+        score += 10;
+        ghost.x = ghostStartX;
+        ghost.y = ghostStartY;
+        ghost.vulnerable = false;
+        if (ghost.direction === "vulnerable") {
+          ghost.direction = "up";
+        }
+      }
+      else if (!isPowerUpActive) {
+        noLoop();
+        fill(255, 0, 0);
+        textSize(48);
+        text("Game Over!", width / 2 - 100, height / 2);
+      }
     }
   }
 }
@@ -508,4 +526,18 @@ function displayScore() {
   text("Score: " + score, 10, 30);
 }
 
+function checkWin() {
+  for (let i = 0; i < rows; i++) {
+    for (let j = 0; j < cols; j++) {
+      if (maze[i][j] === '0') {
+        return false;
+      }
+    }
+  }
+  noLoop();
+  fill(255, 255, 0);
+  textSize(48);
+  textAlign(CENTER, CENTER);
+  text("You Win!", width / 2, height / 2);
+}
 
