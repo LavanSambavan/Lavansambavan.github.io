@@ -1,6 +1,6 @@
-// Project Title
-// Your Name
-// Date
+// PacMan Capstone Project
+// Lavan
+// Jan 27, 2025
 //
 // Extra for Experts:
 // - describe what you did to take this project "above and beyond"
